@@ -51,7 +51,7 @@ disqus_username: lorryjiang
 
 # Analytics settings
 # Baidu Analytics 
-# ba_track_id: [your track id]
+ba_track_id: 2644a36f30787c60a084e9fa5ddfd3ca
 
 # Google Analytics
 ga_track_id: 'UA-117498956-1'            # Format: UA-xxxxxx-xx
