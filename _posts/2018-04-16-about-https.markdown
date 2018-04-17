@@ -6,6 +6,7 @@ date:       2018-04-16 12:39:00
 author:     "Lorry"
 header-img: "http://p799phkik.bkt.clouddn.com/lock.jpeg"
 catalog: true
+multilingual: false
 tags:
     - 科技(tech)
 ---
