@@ -1,18 +1,24 @@
 ---
-layout:     post
-title:      "Hello 2018"
-subtitle:   " \"你好,世界, 你好,博客\""
-date:       2018-04-13 12:00:00
-author:     "Lorry"
-catalog: true
-multilingual: false
+layout:       post
+title:        "Hello World"
+subtitle:     "\"Hello World, Hello Blog\""
+date:         2018-04-13 12:00:00
+author:       "Lorry"
+header-mask:  0.3
+catalog:      true
+multilingual: true
 tags:
-    - 生活(lives)
+    - 生活(live)
 ---
-<h2>{{ page.title }}</h2>
-<p>之前一直都在博客园上写文章,担心总有一天博客园会垮,数据啥的都丢了的话多可惜啊,我也没做备份.</p>
-<p>加上git page极大的降低了搭建的成本,结合jekyll完成了本博客的搭建.</p>
-<p> 借用了@huxpro 的sw(service worker),能够进行本地缓存,提高浏览器性能.</p>
-<div>
-    <p>之后我会在这里发我的前端心得,希望再有生之年能够给世界带来一点点的不一样.</p>
+
+<!-- Chinese Version -->
+<div class="zh post-container">
+    {% capture about_zh %}{% include posts/2018-04-13-hello-world/zh.html %}{% endcapture %}
+    {{ about_zh | markdownify }}
+</div>
+
+<!-- English Version -->
+<div class="en post-container">
+    {% capture about_en %}{% include posts/2018-04-13-hello-world/en.html %}{% endcapture %}
+    {{ about_en | markdownify }}
 </div>
