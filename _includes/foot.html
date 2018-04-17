@@ -133,10 +133,10 @@
     function generateCatalog (selector) {
 
         // interop with multilangual 
-        if ( page.multilingual ) {
-            _containerSelector = 'div.post-container.active'
+        if ( {{ page.multilingual }} ) {
+            _containerSelector = 'div.post-container.active';
         } else {
-            _containerSelector = 'div.post-container'
+            _containerSelector = 'div.post-container';
         }
 
         // init
