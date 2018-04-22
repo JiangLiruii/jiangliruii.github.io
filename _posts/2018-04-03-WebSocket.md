@@ -6,6 +6,7 @@ date:       2018-03-16 12:00:00
 author:     "Lorry"
 catalog: true
 multilingual: false
+header-img: "http://p799phkik.bkt.clouddn.com/night_sky.jpeg"
 tags:
     - Node.js
 ---
@@ -77,7 +78,8 @@ success: function(result) {
 2. 握手期间发送协议切换的请求,接受101响应,通过web Socket Key进行验证.  后续传输过程不必再包含繁重的请求头信息
 
 3. 双方响应,服务端也可以send massage到客户端,而不仅仅是只有客户端单向请求.
-![](https://images2018.cnblogs.com/blog/1215846/201804/1215846-20180403112854424-1905178743.png)
+
+![](http://p799phkik.bkt.clouddn.com/websocket.png)
 
 服务器端(基于nodejs)
 ``` JavaScript
