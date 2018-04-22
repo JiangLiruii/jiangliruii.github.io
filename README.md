@@ -1,6 +1,10 @@
+### add words analysis
+
+from v1.0.1, we support the words analysis and time to read
+
 #### Analytics
 
-From V1.5, we support Google Analytics and Baidu Tongji officially with a deathly simple config:
+From V1.0, we support Google Analytics and Baidu Tongji officially with a deathly simple config:
 
 ```
 
