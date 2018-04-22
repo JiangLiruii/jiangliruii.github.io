@@ -11,9 +11,9 @@ tags:
 ---
 # 说在前面
 ## 在jQuery中有不少的伪类选择器,给了我们在选取元素时很大的帮助,可以减少类和id的定义.下面时对:nth选择器的总结和分析.
-> 来贴一段代码,具体效果可[点击](../_data/2018-03-16-jQuery-nth.html)
-```html
-<!DOCTYPE html>
+> 来贴一段代码
+
+```
 <html>
 <head>
 <meta charset="utf-8">
