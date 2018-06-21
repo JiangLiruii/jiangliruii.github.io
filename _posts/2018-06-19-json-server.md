@@ -1,11 +1,11 @@
 ---
 layout:       post
-title:        "json-server 自构 api"
+title:        "json-server自构api"
 subtitle:     "授之于鱼不如授之以渔"
-date:         2018-06-21 12:00:00
+date:         2018-06-19 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img: 'http://p799phkik.bkt.clouddn.com/paper.jpeg'
+header-img:   'http://p799phkik.bkt.clouddn.com/paper.jpeg'
 catalog:      true
 multilingual: false
 tags:
