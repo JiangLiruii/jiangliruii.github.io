@@ -2,10 +2,10 @@
 layout:       post
 title:        "Layout Thrashing"
 subtitle:     "你的一点点改变,却要改变整个的我"
-date:         2018-06-21 12:00:00
+date:         2018-07-01 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   'http://p799phkik.bkt.clouddn.com/promise.jpg'
+header-img:   'http://p799phkik.bkt.clouddn.com/weekly-designer-and-developer-news-1-13.png'
 catalog:      true
 multilingual: false
 tags:
