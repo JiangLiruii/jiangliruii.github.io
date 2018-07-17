@@ -154,7 +154,16 @@ node不用说,我们需要使用很多npm的模块,可以少造很多的轮子,�
 
 ## Webpack 
 
-一个供浏览器环境使用的打包工具,对静态资源进行统一管理.
+一个供浏览器环境使用的打包工具,对静态资源进行统一管理.相当于一个工厂,将所有对程序员友好但是对浏览器无法识别或可以进一步优化的"原料"进行处理和加工,以实现程序的正常运行.
+
+### webpack三大核心:
+
+- Entry
+- Output
+- Loaders
+- Plugins
+
+### 配置流程
 
 - 安装 `npm install -g webpack`建议全局安装
 - `webpack --config <custom config>`
@@ -168,19 +177,47 @@ node不用说,我们需要使用很多npm的模块,可以少造很多的轮子,�
             filename: 'bundle.js'           // 打包后文件名
         }
     }
+    // 通常情况下需要使用path模块来对win和mac的路径分隔符进行兼容
+
+    const path = require('path');
+    module.exports = {
+        entry: ['./app/main.js'],
+        output: {
+            path: path.resolve(__dirname, 'dist'),
+            filename: 'bundle.js'
+        }
+    }
     ```
-- 如果文件包含es6和jsx语法,需要进行转译,用到之前提到的babel,webpack有专用的babel-loader和Bable预处理器
-    ```
-    npm install babel-loader -D
-    npm install babel-preset-react -D
-    npm install babel-preset-es2015 -D
-    ```
+- 因为webpack只认识js文件,所以就引入loader来作为"媒人"将其他文件"介绍"给webpack认识,并且将其转化为的模块(能够让应用使用且添加到依赖表中). loader有两个重要属性:
+1 `test`: 识别哪些格式的文件需要被转译
+2 `use`: 哪个loader可以用于该转译过程
+
+例如:ts和css语法
+
+```
+npm install css-loader -D
+npm install ts-loader -D
+```
+
     在webpack.config.js中添加
-    ``` javascript
+``` javascript
+module.exports = {
+    module: {
+        rules: [
+            { test: '/\.css$/', use: 'css-loader' },
+            { test: '/\.ts$/', use: 'ts-loader' }
+        ]
+    }
+}
+```
+
+
+    <!-- ```
     module: {
         loaders: [{
+            test: "/\.jsx?$/",                       // 对应什么具体格式的文件
+            use:  'style-loader',  
             loader: "babel-loader",                  // 加载器
-            text: "/\.jsx?$/",                       // 对应什么具体格式的文件        
             query: {presets: ['react', 'es2015']     // *.loader的参数
         },{
             loader: "style-loader!css-loader",       // 感叹号表示级联
@@ -194,8 +231,36 @@ node不用说,我们需要使用很多npm的模块,可以少造很多的轮子,�
         }
         ]
     }
-    ```
+    ``` -->
 
+- Plugins: loader用于转译某种类型模块, plugins可以用于批量处理如: bundle optimization, assets management 和injection of environment variables, 比如HtmlWebpackPlugin
+```js
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
+module.exports = {
+    module: {
+        rules: [
+            {
+                test: /\.txt$/,
+                use: 'raw-loader'
+            }
+        ]
+    },
+    plugins: [
+        new HtmlWebpackPlugin({template: './src/index.html'})
+    ]
+}
+```
+该插件会将自动生成的bundle注入到指定的html文件中
+
+- Mode: 使用mode可以让webpack优化响应每种环境,默认为 `production`, 还有 `development` 和 `none` 可选
+```js
+module.exports = {
+    mode: 'production'
+};
+```
+
+### 其他值得一提的
 - dev-server
     - `npm install -g webpack webpack-dev-server` 建议全局安装
     - 使用`webpack-dev-server` 便可直接启动开发服务器
