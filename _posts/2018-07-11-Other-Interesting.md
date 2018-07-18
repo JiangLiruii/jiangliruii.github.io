@@ -287,3 +287,193 @@ const Button = props => <button onClick={props.onClickHandler} >{props.label}</b
 const Logo = props => <img src='logo.png' href='#' onClick={props.onClickHandler} />
 
 const Link = props => <a onClick={this.onClickHandler} href='#'>{props.label}</a>
+```
+
+## 滚动条宽度
+
+macOS: 15px
+Windows: 17px --> Chrome, Firefox, IE  16px --> Edge  15px --> Opera
+
+### 如何测量呢?
+
+```js
+// 定义外盒子
+const outer = document.createElement('div');
+// 定义内盒子
+const inner = document.createElement('div');
+// 定义overflow
+outer.style.overflow = 'scroll';
+// 添加外盒子到body中
+document.body.appendChild(outer);
+// 添加内盒子到外盒子中
+outer.appendChild(inner);
+// 根据宽度差计算滚动条宽度
+const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
+// 移除外盒子
+document.body.removeChild(outer);
+```
+注意以上代码只能检测原始的滚动条宽度,无法检测在css中设置过的滚动条宽度, 而且有DOM操作, 对性能也有所影响.
+
+### 更好的解决办法是隐藏滚动条:
+
+```css
+/* for chrome safari opera */
+.container::-webkit-scrollbar {
+    display: none;
+}
+/* for ie, edge */
+.container {
+    -ms-overflow-style: none;
+}
+```
+但是对于Firefox是没有办法隐藏滚动条的.
+
+### 其他对滚动条的css设置:
+```css
+body {
+    scrollbar-face-color: blue;
+}
+/* webkit前缀支持 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #fff;
+    border-radius: 4px;
+}
+```
+
+### 流畅的操作体验
+对于滚动而言,最常见的就是登录页导航, 通常是通过锚点来完成:
+```html
+<a href="#section">Section</a>
+```
+只是用一行js便可实现平滑滚动
+```js
+elem.scrollIntoView({
+    behavior: 'smooth',
+})
+```
+还有一个css属性可以改变整个页面的滚动行为
+```css
+html {
+    scroll-behavior: smooth;
+}
+```
+
+### 粘性css(`position: sticky`)
+
+![](https://mmbiz.qpic.cn/mmbiz_gif/btsCOHx9LAOlAlnq7uds6icTwS4Mhsoyl5n0jvL6vxlIE0eiaH2uKzwToExWiavbtXdGTHfzpWouGS5ickdCF0RObQ/640?wx_fmt=gif&tp=webp&wxfrom=5&wx_lazy=1)
+
+```css
+.element {
+    position: sticky;
+    bottom: 50px;
+}
+```
+上述代码表示在viewport中,当element距viewport的bottom小于50px时会将position变为fixed, 实现距离底部始终为50px, 直到当距离bottom大于50px时恢复position为relative的状态.`left, right, top`同理.
+
+### 滚动的函数节流
+
+通常我们使用`addEventListener`去处理
+```js
+window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    // dosomething with scrollTop
+});
+// 使用函数节流
+window.addEventListener('scroll', throttle(() => {
+    const scrollTop = window.scrollY;
+    // dosomething with scrollTop
+}))
+// 定义节流函数,默认1秒触发一次
+function throttle(action, wait = 1000) {
+    let time = Date.now();
+    return function () {
+        if ((time + wait - Date.now()) < 0) {
+            action();
+            time = Date.now();
+        }
+    }
+}
+// 或者使用requestAnimationFrame
+function throttle(action) {
+    let isRunning = false;
+    return function() {
+        if (isRunning) return;
+        isRunning = true;
+        window.requestAnimationFrame(()=> {
+            action();
+            isRunning = false;
+        })
+    }
+}
+```
+### 在视窗中显示
+
+当图片进行懒加载活无限滚动时, 需要确定元素是否出现在视窗中.可以使用`element.getBoundingClientRect()`
+
+```js
+window.addEventListener('scroll', () => {
+    const rect = elem.getBoundingClientRect();
+    const inViewport = rect.bottom > 0 && rect.right > 0 && rect.left < window.innerWidth && rect.top < window.innerHeight
+})
+```
+但是会触发回流(reflow), 具体情况请参考 [layout thrashing](https://lorryjiang.info/2018/07/01/Layout-Thrashing/#%E6%80%BB%E7%BB%93)
+影响性能, 虽然也可以通过throttle函数节流,但是也只能减小一些影响,有没有更好的办法呢?
+
+使用 [`IntersectonObserver()`](https://developer.mozilla.org/zh-CN/docs/Web/API/IntersectionObserver)这一API来解决该问题,允许追踪目标元素与祖先元素或视窗的交叉状态.只要有部分元素出现在视窗中,哪怕只有一像素都会触发回调函数.
+```js
+const observer = new IntersectionObserver(callback, option);
+observer.observe(element)
+```
+### 滚动边界
+
+如果某个下拉列表是可以滚动的,需要注意一些连锁滚动相关的问题.比如:
+当用户滚动到下拉列表的末尾时,后续再滚动,整个页面都会滚动.
+![](http://p799phkik.bkt.clouddn.com/roll.gif)
+当滚动到底部时可以改变页面的`overflow`属性活在滚动元素的滚动处理函数中取消默认行为.记住处理的是 `wheel` 而不是 `scroll` 事件
+
+```js
+function handleOverscroll(event) {
+    const delta = -event.deltaY;
+    if (delta < 0 && elem.offsetHeight - delta > elem.scrollHeight - elem.scrollTop) {
+        elem.scrollTop = elem.scrollHeight;
+        event.preventDefault();
+        return false;
+    }
+    if (delta > elem.scrollTop) {
+        elem.scrollTop = 0;
+        event.preventDefault();
+        return(false);
+    return true;
+    }
+}
+```
+不幸的是,移动端的表现并不好,因为有下拉刷新手势,会阻碍上述代码的执行.
+
+css可以通过 `overscroll-behavior`解决问题
+```css
+.element {
+    overscroll-behavior: contain;
+}
+```
+ ### 惯性滚动
+
+ ```css
+ .element {
+     -webkit-overflow-scrolling: touch;
+ }
+ ```
+ 只用于支持webkit的浏览器,只适用于触屏设备
+
+ 而且如何处理`touchstart` 和 `touchmove` 事件存在的性能问题, 为了让滚动变得平滑,需要执行Event.preventDefalut()以取消默认行为,有时仍可能需要花费时间来等待事件处理函数执行完毕.
+
+有一个passive event listeners可以用
+```js
+element.addEventListener('touchstart', e => {}, {passive: true});
+```
+以下是使用了passive event listener和未使用的对比视频,[CNN网页对比_from_youtube](https://www.youtube.com/watch?v=NPM6172J22g)
+
+## 感谢
+> [Evil Martians’ team](https://evilmartians.com/chronicles/scroll-to-the-future-modern-javascript-css-scrolling-implementations)
