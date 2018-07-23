@@ -477,3 +477,53 @@ element.addEventListener('touchstart', e => {}, {passive: true});
 
 ## 感谢
 > [Evil Martians’ team](https://evilmartians.com/chronicles/scroll-to-the-future-modern-javascript-css-scrolling-implementations)
+
+
+
+
+## 相对路径
+### ../src ./src /src src 的区别
+
+- ../src是父级目录中的src
+- ./src是同级目录中的src
+- /src是根目录下的src(与package.json同级)
+- src与./src一样,表示同级目录
+
+### js与css中的相对定位
+
+```css
+@font-face {
+    font-family: 'my special font';
+    src: url('../a/b/c');
+}
+
+a {
+    font-family: 'my special font';
+}
+```
+这里url中的相对定位是相对于**css文件**所在目录.
+
+```js
+// a.js
+$.get('../a.html', () => console.log('got a'));
+```
+通过script标签在html引用
+```html
+<script src='a.js'></script>
+```
+在a.js中的相对定位是**基于html**的位置
+
+当然现在大多数js是通过模块引用,而不是script标签, 所以基本上js也是基于自身定位,但请注意在webpack中引用打包后的资源的位置,而不是打包前开发环境中的位置.比如:
+```js
+// webpack
+  copy: [
+    {
+      from: './public/audio',
+      to: './dist/audio',
+    }
+  ],
+```
+打包后的index.js与dist同级,所以要获取audio直接使用./audio即可.
+
+
+
