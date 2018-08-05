@@ -526,4 +526,22 @@ $.get('../a.html', () => console.log('got a'));
 打包后的index.js与dist同级,所以要获取audio直接使用./audio即可.
 
 
+8.5 今天在修bug的时候合作方提了一个需求: 图片太长,低端机的拖动较为卡顿.
+
+在已经使用tinypng进行压缩不能再对其大小进行限制的时候想到了有没有对滑动属性的支持,后来google之后果然发现一个属性`--webkit-overflow-scrolling: touch` 使用这个属性就可以让图片在手指滑动完毕之后依然进行惯性的滑动,以此来确保滑动的流畅性.
+
+在全局中`<body>`或长高均为100%的元素中是默认会应用该属性,但是局部滑动却不会应用.所以在需要局部刷新时可对此属性进行优化.
+
+除此之外还有其余的属性能够优化滑动效果:
+
+```css
+.img {
+-webkit-overflow-scrolling: touch;
+-webkit-transform: translateZ(0px);
+-webkit-transform: translate3d(0,0,0);
+-webkit-perspective: 1000;
+}
+```
+
+
 
