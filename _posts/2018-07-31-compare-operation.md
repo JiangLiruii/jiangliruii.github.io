@@ -9,7 +9,7 @@ header-img:   'http://p799phkik.bkt.clouddn.com/compare.jpg'
 catalog:      true
 multilingual: false
 tags:
-    - Interesting
+    - javascript
 ---
 
 ECMAScript标准中有一大章节是讲[Abstract Operation](http://www.ecma-international.org/ecma-262/8.0/index.html#sec-abstract-operations), 目的仅仅是为了定义语法以及抽象运算, 其中就包括了比较,以及比较中十分重要的类型转换.
