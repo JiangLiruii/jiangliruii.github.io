@@ -544,4 +544,42 @@ $.get('../a.html', () => console.log('got a'));
 ```
 
 
+## 参数的解构
 
+一直用的是ES6的解构语法,比如:
+```js
+let a = function(..args) {
+    console.log(...args)
+}
+a(1,2,3,4) // 1 2 3 4
+```
+
+但是如果是ES5的话应该如何使用呢?最近看书发现了一个用高阶函数进行封装达到解构效果的方法.
+
+```js
+let a = fn => Function.apply.bind(fn, null);
+a((b,c) => console.log(b,c))([1,2]) // 1,2
+
+// 实例:
+function getY(x) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => resolve(x * 3), 1000);
+    })
+}
+function foo(bar, baz) {
+    const x = bar * baz;
+    // 返回两个promise
+    return [Promise.resolve(x), getY(x)]
+}
+Promise.all(foo(10,20)).then(a((b, c) => console.log(b,c))) // 200, 600
+
+```
+等价于
+```js
+function a([b,c]) {
+    console.log(b,c)
+}
+a([1,2,3]) // 1,2
+// 上例可改写为:
+Promise.all(foo(10,20)).then(([b,c]) => console.log(b,c)) // 200, 600
+```
