@@ -241,8 +241,15 @@ sourceMap|{String|Boolean}|false|Enable Source Maps
 ### exec 如果没有添加`postcss-js `parser的话, 需要添加 `exec`为true
 ```js
 // postcss 源码
+    if (options.parser === 'postcss-js') {
+      css = this.exec(css, this.resource)
+    }
 
+    if (config.exec) {
+      css = this.exec(css, this.resource)
+    }
 ```
+如果parser中没有postcss-js, 那么可以设置exec为true, 效果一样.
 ### Config
 Name|Type|Default|Description
 --|--|--|--
