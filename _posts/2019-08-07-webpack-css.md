@@ -188,3 +188,183 @@ import {className} from 'file.css'
     'postcss-loader',
     'sass-loader']
 }
+```
+# postcss-loader,这是一个可以有丰富自定义功能的css打包工具
+
+## install `yarn postcss-loader -D`
+
+## configuration 每个css目录下都可以新建一个`postcss.config.js`
+```js
+module.exports = {
+    parser: 'sugarss',
+    plugins: {
+        'postcss-import':{},
+        'postcss-preset-env': {},
+        'cssnano': {}
+    }
+}
+```
+需用在css-loader之后, sass/less等之前.
+```js
+// webpack.config.js
+module.exports = {
+    modules: {
+        rules: [
+            {
+                test: /\.css$/,
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            importLoader: 1
+                        }
+                    },
+                    'postcss-loader',
+                ]
+            }
+        ]
+    }
+}
+```
+## Options
+Name|Type|Default|Description
+---|---|---|---
+exec|{Boolean}|undefined|Enable PostCSS Parser support in CSS-in-JS
+parser|{String|Object}|undefined|Set PostCSS Parser
+syntax|{String|Object}|undefined|Set PostCSS Syntax
+stringifier|{String|Object}|undefined|Set PostCSS Stringifier
+config|{Object}|undefined|Set postcss.config.js config path && ctx
+plugins|{Array\|Function}|[]|Set PostCSS Plugins
+sourceMap|{String|Boolean}|false|Enable Source Maps
+
+### exec 如果没有添加`postcss-js `parser的话, 需要添加 `exec`为true
+```js
+// postcss 源码
+
+```
+### Config
+Name|Type|Default|Description
+--|--|--|--
+path|{String}|undefined|PostCSS Config Directory
+context|{Object}|undefined|PostCSS Config Context
+### path 
+可手动设置config的搜索路径, 当将config文件分别储存的时候需要.但是需要注意的是必须将配置文件的名字设置为 `.postcss.js 或 postcss.config.js`, 此处设置的路径只能到文件夹
+```js
+{
+  loader: 'postcss-loader',
+  options: {
+    config: {
+      path: 'path/to/.config/' ✅
+      path: 'path/to/.config/css.config.js' ❌
+    }
+  }
+}
+```
+### Context(ctx)
+Name|Type|Default|Description
+--|--|--|--
+env|{string}|'development'|process.enc.NODE_ENV
+file|{Object}|loader.resourcePath|extname,dirname, basename
+options|{Object}|{}|Options
+
+`postcss-loader` 暴露上下文文给config 文件, 可以使得配置文件动态配置
+```js
+// postcss.config.js
+module.exports =({file, options, env}) => ({
+    parser: file.extname === '.sss' ? 'sugarss': false,
+    plugins: {
+        'postcss-import': {root: file.dirname},
+        'postcss-preset-env': options['postcss-preset-env'] ? options['postcss-preset-env'] : false,
+        'cssnano': env === 'production' ? options.cssnano: false,
+    }
+})
+// webpack.config.js
+{
+    loader: 'postcss-loader',
+    options: {
+        config: {
+            ctx: {
+                'postcss-preset-env': {...options},
+                cssnano: {...options},
+            }
+        }
+    }
+}
+```
+
+## Plugins
+```js
+// webpack.config.js
+{
+    loader: 'postcss-loader',
+    options: {
+        idet:'postcss',
+        plugins (loader) => [
+            require('postcss-import')({root: loader.resourcePath}),
+            require('postcss-preset-env')(),
+            require('cssnano')()
+        ]
+    }
+}
+```
+## Syntaxes
+Name|Type|Default|Description
+--|--|--|--
+parser|{String|Function}|undefined|Custom PostCSS Parser
+syntax|{String|Function}|undefined|Custom PostCSS Syntax
+stringifier|{String|Function}|undefined|Custom PostCSS Stringifier
+
+### parser 之前已经配过的`options:{parser: 'sugarss'}`
+### syntax `options:{syntax: 'sugarss'}`
+### stringifier `options:{stringifier: 'midas'}`
+
+## 使用案例
+### 1 如果想在js中写css
+```js
+// webpack.config.js
+{
+  test: /\.style.js$/,
+  use: [
+    'style-loader',
+    { loader: 'css-loader', options: { importLoaders: 2 } },
+    { loader: 'postcss-loader', options: { parser: 'postcss-js' } },
+    'babel-loader'
+  ]
+}
+// xx.style.js
+import colors from './styles/colors'
+
+export default {
+    '.menu': {
+        color: colors.main,
+        height: 25,
+        '&_link': {
+            color:'white'
+        }
+    }
+}
+```
+### 2 Extract css
+```js
+// webpack.config.js
+const devMode = env.process.NODE_ENV !== 'production'
+const MiniCSSExtractPlugin = require('mini-css-extract-plugin')
+module.exports = {
+    module: {
+        rules: {
+            test:/\.css$/,
+            use: [
+                devMode ? 'style-loader' : MiniCSSExtractPlugin.loader,
+                'css-loader',
+                'postcss-loader', 
+            ]
+        }
+    },
+    plugins: [
+        new MiniCSSExtractPlugin({
+            filename: devMode ? '[name].css' : '[name].[hash].css'
+        })
+    ]
+}
+```
