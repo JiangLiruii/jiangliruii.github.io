@@ -583,3 +583,162 @@ a([1,2,3]) // 1,2
 // 上例可改写为:
 Promise.all(foo(10,20)).then(([b,c]) => console.log(b,c)) // 200, 600
 ```
+
+### 用户输入验证
+
+监听input事件
+
+```html
+<input id="test"/>
+```
+```js
+// 匹配emoji表情和颜文字
+function validate_string() {
+  return /(\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f])|(\ud83d[\ude80-\udeff])/g;
+}
+// 只允许汉字,字母,数字输入
+function validate_variable_name() {
+return !/^[\u4E00-\u9FA5A-Za-z][\u4E00-\u9FA5A-Za-z0-9]*$/g;
+};
+
+document.getElementById('test').addEventListener('input', (e) => {
+    e.target.value.replace(validate_string(), '');
+    e.target.value.replace(validate_variable_name(), '');
+    return false;
+})
+```
+在往深一步, 国人在输入拼音的时候有一个中间态, 即拼的过程, 姑且成为间接输入也会触发input事件.
+
+还有两个事件, `compositionstart` 间接输入时触发 和 `compositionend`间接输入结束时,即用户选词时触发, 那么就可以通过一个inputlock进行状态锁定
+
+```js
+let inputLock;
+document.getElementById('test').addEventListener('compositionstart', () => {
+    inputLock = true;
+})
+document.getElementById('test').addEventListener('compositionend', () => {
+    inputLock = false;
+    dosomething(e.target);
+})
+document.getElementById('test').addEventListener('input', (e) => {
+    if (!inputLock) {
+        dosomething(e.target);
+        return false;
+    }
+})
+```
+
+### 关于可视区域
+
+判断元素是否在可视区域
+`domElemen.offsetTop < window.innerHeight + documen.body.scrollTop`
+domElement.offsetTop: DOM元素距离顶部的值
+window.innerHeight: 视窗高度, 包括内容, 边框, 滚动条
+window.scrollY: window滚动的高度
+
+窗口高度: 
+window.outerHeight: 整个浏览器窗口的大小, 包含窗口标题, 工具栏, 状态栏
+documentElement.clientHeight: 视窗高度, 不包括整个文档的滚动条,也不包括元素的边框和滚动条
+document.body.clientHeight: 整个body的高度, 包含滚动条.
+
+滚动高度:
+clientHeight: 内部可视区域大小
+offsetHeight: 可视区域大小, 包含border和scrollbar = document.body.clientHeight
+scrollHeight: 元素内容高度, 包括overflow
+scrollTop: 元素内容向上滚动了多少像素
+
+举点例子吧:
+```js
+// 获取整个body高度
+document.documentElement.offsetHeight = document.body.clientHeight = document.body.offsetHeight = document.body.scrollHeight = document.documentElement.scrollHeight
+// 获取当前视窗scroll值
+window.scrollY = document.documentElement.scrollTop
+// 获取当前窗口的高度
+document.documentElement.clientHeight = window.innerHeight
+```
+### 要知道在html中每个元素都是被绑定在一个矩形中的,也就是盒型模型, 如何获取这个大小和位置呢?
+`Element.getBoundingClientRect()`
+
+包含了以下只读属性:
+- width
+- height
+以下单位为像素, 且相对viewport的左上角
+- left
+- top
+- right
+- bottom
+
+### 判断某个元素是否进入视图 IntersectionObserver
+
+传统的做法是监听scroll事件, 调用getBoundingClientRect(), 得到相对于左上角的坐标, 再判断是否在窗口内. scroll很消耗性能
+
+这个API检测目标元素是否与当前视口产生了交叉区, 所以也叫做交叉观察器.
+
+```js
+/*
+* callback, 会被调用两次, 一次进入视图, 一次离开视图 
+* entries是一个数组, 监听几个dom就有几个成员, 每一个成员都有以下属性: 1 time 发生变化的时间 2 target 目标元素 3 rootBounds 根元素矩形信息 4 boundingClientRect, 目标元素区域信息 5 intersectionRect 目标元素与视图窗口(或根元素)的交叉区域信息 6 intersectionRatio 目标元素的可见比例 即intersectionRect / boundingClientRect, 完全可见时为1, 不可见为0
+* options
+*/
+let io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+        console.log(entry)
+    })
+})
+
+// 开始观察, 指定DOM节点
+io.observe(dom)
+// 停止观察
+io.unobserve(dom)
+// 关闭observer
+io.disconnect()
+```
+关于intersectionRatio, 阮一峰有一幅图: ![](http://www.ruanyifeng.com/blogimg/asset/2016/bg2016110202.png)
+
+这个拿来有什么用呢??
+
+### 惰性加载 (lazy load), 只有用户向下滚动, 进入视图才加载
+
+```js
+let observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+        let container = entry.target;
+        let content = container.querySelector('template').content;
+        container.appendChild(content);
+        observer.unobserve(container);
+    })
+})
+
+Array.from(document.querySelectorAll('.lazy-loader')).forEach(item => observer.observe(item))
+```
+### 无限滚动
+```js
+let intersectionObserver = new IntersectionObserver(entries => {
+    if(entries[0].intersectionRatio <= 0) return;
+    loadItems(10);
+    console.log('load new items');
+})
+intersectionObserver.observe(
+    document.queryselector('.scrollerFooter')
+)
+```
+当页面滑动到尾页栏时, 加载新的条目在尾页栏前, 这样就可以让observer重复使用.
+
+### 在参数中除了callback之外还有option对象:
+#### threshold属性
+```js
+new intersectionObserver(entries => {}, {
+    threshold: [0,0.25,0.5,0.75,1]
+})
+```
+效果为:![](http://www.ruanyifeng.com/blogimg/asset/2016/bg2016110202.gif)
+#### root属性: rootMargin
+目标元素除了随着默认的窗口滚动, 还可能在container中滚动, 比如iframe.容器元素必须是目标元素的祖先节点.
+```js
+let opt = {
+    root: document.querySelector('.container'),
+    // 用来扩展或缩小rootBounds这个矩形的大小
+    rootMargin: '500px, 0px',
+}
+```
+### intersectionObserver优先级很低,只能在浏览器空闲后执行.
