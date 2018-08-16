@@ -213,4 +213,11 @@ cookie = 'user_name=Lorry;expires=Thu, 01 Jan 1970 00:00:01 GMT';
 - 验证时不仅仅依赖于`cookies`, 同时需要验证请求的方式, 比如使用 `POST`
 而不是`GET`
 
+## 横向对比
+
+储存模式|大小|描述|读权限|老式浏览器兼容性|
+--|--|--|--|--
+LocalStorage| 5Mb/10Mb储存大小| 不基于会话, 需要通过js或手动在devtool中清楚 | 客户端 | 欠佳
+SessionStorage| 5Mb 储存大小|基于每个窗口或tab的会话|客户端|欠佳
+Cookie| 4Kb|过期时间需要设置并且在每个窗口或tab上工作|服务端和客户端|好
 
