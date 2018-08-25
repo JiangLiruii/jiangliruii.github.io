@@ -742,3 +742,10 @@ let opt = {
 }
 ```
 ### intersectionObserver优先级很低,只能在浏览器空闲后执行.
+
+
+## 关于terminal操作指令:
+
+### 遇到端口占用时:
+`lsof -i tcp:[port]` 显示占用端口pid
+`kill -9 [pid]` 退出对应pid, 释放端口
