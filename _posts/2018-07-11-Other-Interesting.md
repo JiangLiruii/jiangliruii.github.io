@@ -523,8 +523,18 @@ $.get('../a.html', () => console.log('got a'));
     }
   ],
 ```
-打包后的index.js与dist同级,所以要获取audio直接使用./audio即可.
+打包后的index.js与dist同级,所以要获取audio直接使用./audio即可. 注意需要使用`copy-webpack-plugin`插件
 
+### webpack打包后路径引用
+
+```js
+// webpack.config.js 看看这两者的差别
+module.exports = {
+    publicPath: './',
+    publicPath: '/',
+}
+```
+如果以http协议访问是没有区别的,两者都一样, 但是如果是file协议进行访问, 那么前者可正常, 后者会被引用到根目录, 导致无法访问的问题, 所以建议配置'./'
 
 8.5 今天在修bug的时候合作方提了一个需求: 图片太长,低端机的拖动较为卡顿.
 
@@ -749,3 +759,46 @@ let opt = {
 ### 遇到端口占用时:
 `lsof -i tcp:[port]` 显示占用端口pid
 `kill -9 [pid]` 退出对应pid, 释放端口
+
+
+## javascript点滴
+
+### new.target
+
+```js
+// 函数强制返回new调用实例:
+function foo(name) {
+    if (!new.target) {
+        return new foo(name);
+    }
+	var self = this;
+	self.name = name;
+}
+// 抛出一个错误:
+function foo(name) {
+    if (!new.target) {
+        throw Error('must called with new');
+    }
+	var self = this;
+	self.name = name;
+}
+// new.target.name 属性, 通常情况下就是函数名
+function foo() {
+    console.log(new.target.name)
+}
+const a = new foo();// foo
+// 如果是类的情况
+class A {
+    constructor() {
+        console.log(new.target.name)
+    }
+}
+class B extends A {
+    constructor() {
+        super();
+    }
+}
+const a = new A();// A
+const b = new B();// B
+// 可以看到这个target就是new时候的对象.
+```
