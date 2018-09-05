@@ -17,8 +17,6 @@
       "grunt-contrib-uglify": "~0.5.1"
   },
   "scripts": {
-      "preview": "python3 -m http.server 8021",
-      "watch"  : "grunt watch & npm run preview & jekyll serve -w",
-      "push"   : "git push origin master --tag"
+      "watch"  : "jekyll serve -w"
   }
 }
