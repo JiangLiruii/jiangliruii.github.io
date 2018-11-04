@@ -160,3 +160,125 @@ assert.areEqual(converter.celsiusFahrenheit(0), 32);
 #### 编译 `outfile`的排版 是很灵活的, 因为相对路径并没有多大的影响, 需要记住的是不要在最后一个项目之前使用`prepend`, 这将会在任意构建中改进编译次数, 并且降低 I/O 数量. ts 仓库本身也是一个很好的参考, 我们有一些 library 项目和一些 endpoint 项目,  endpoint 项目尽可能的小并且只获取需要的库.
 
 > 翻译自 --https://www.typescriptlang.org/docs/handbook/project-references.html
+
+# 在剩余参数中的元组(Tuples)和扩展表达式
+
+## 在 ts3.0中加入了多个关于与函数参数列表有关新属性作为 tuple 类型
+
+- 元祖类型的剩余参数
+```ts
+declare function foo(...args: [number, string, boolean]): void;
+declare function foo(args_0:number, args_1:string, args_2:boolean): void;
+```
+- 元组类型的spread表达式: 
+```ts
+const args: [number, string, boolean] = [42, "hello", true]
+foo(42, "hello", true);
+foo(args[0], args[1], args[2])
+foo(...args)
+```
+- 普通剩余参数: 可利用该特性抽象出高阶函数
+```ts
+declare function bind<T, U extends any[], V>(f:(x:T, ...args: U) => V, x:T): (...args: U) => V;
+
+declare function f3(x:number, y:string, z:boolean): void;
+const f2 = bind(f3, 42);// (y:string, z:boolean) => void
+const f1 = bind(f2, "hello");//(z:boolean) => void
+const f0 = bind(f1, true);// () => void
+f3(42, "hello", true)
+f2("hello", true)
+f1(true)
+f0()
+// T: number, U:[string, boolean], V: void
+```
+- 元组类型的可选元素: `?`
+```ts
+let t:[number, string?, boolean?];
+t = [42, "hello", true]
+t = [42, "hello"]
+t = [42]
+// 在-- strictNullCheck 模式中, ? 自动回包含`undefined`, 类似于可选参数
+```
+    - 元组中的剩余元素
+```ts
+function tuple<T extends any[]>(...args: T): T {
+    return args
+}
+const numbers: number[] = getArrayOfNumbers();
+const t1 = tuple('foo', 1, true); // [string, number, boolean]
+const t2 = tuple('bar', ...numbers);// [string,...numbers]
+```
+
+## 一个新的 未知 (unknown)类型
+- unknown 是一个类似于 any 的安全类型
+- 任何类型都可以给 unknown 进行赋值
+- unknown 不能在没有类型断言或基于窄的控制流给它自己或者 any 之外的类型赋值, 
+- 没有任何运算符允许使用 unknown, 在没有初次断言或狭窄定义一个具体的类型, 只有==, 或!==可以使用
+- unknown & 任意类型 T 都为 T
+- unknown | 任意类型 T 都为 unknown (any 除外 unknown | any = any)
+- keyof unknown 为 never 
+```ts
+type T40 = keyof any;  // string | number | symbol
+type T41 = keyof unknown;  // never
+```
+- 没有属性, 函数调用, 元素索引
+```ts
+function f11(x: unknown) {
+    x.foo;  // Error
+    x[5];  // Error
+    x();  // Error
+    new x();  // Error
+}
+```
+- 用户自断言, 使用 typeof, instanceof
+```ts
+declare function isFunction(x: unknown): x is Function;
+
+function f00(x: unknown) {
+    if (typeof x === "string" || typeof x === "number") {
+        x;  // string | number
+    }
+    if (x instanceof Error) {
+        x;  // Error
+    }
+    if (isFunction(x)) {
+        x;  // Function
+    }
+}
+```
+- unknown 不能给 object 类型赋值
+```ts
+function foo(x: { [x: string]: unknown }) {
+    x = {};
+    x = { a: 5 };
+    x = [1, 2, 3];
+    x = 123;  // Error
+}
+```
+- unknown 的本地类型被视为初始化
+```ts
+function foo(x: {}, y: unknown, z: any) {
+    let o1 = { a: 42, ...x };  // { a: number }
+    let o2 = { a: 42, ...x, ...y };  // unknown
+    let o3 = { a: 42, ...x, ...y, ...z };  // any
+}
+```
+- unknown 返回值被视为不需要任何 return 语句
+```ts
+function foo(): unknown {
+}
+```
+- 剩余类型不能从 unknown 创建
+```ts
+function foo(x: unknown) {
+    let { ...a } = x;  // Error
+}
+```
+- 类属性的未知类型不需要明确的赋值
+```ts
+class C1 {
+    a: string;  // Error
+    b: unknown;
+    c: any;
+}
+```
