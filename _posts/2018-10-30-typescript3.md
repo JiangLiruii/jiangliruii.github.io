@@ -1,11 +1,11 @@
 ---
 layout:       post
-title:        "typescript 3.1"
-subtitle:     "typescript 3.1 简介"
+title:        "Typescript 3.1"
+subtitle:     "Typescript 3.1 简介"
 date:         2018-10-30 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   '/img/performanceEvent.jpg'
+header-img:   '/img/ts.jpg'
 catalog:      true
 multilingual: false
 tags:
@@ -281,4 +281,42 @@ class C1 {
     b: unknown;
     c: any;
 }
+```
+# 支持 在 JSX 中的`defaultProps`
+## ts3.0 新增支持一个别名为 JSX 命名空间的新类型--`LibraryManagedAttributes`.它定义了组件在使用 JSX 表达式瞄准前的 Props 类型的传递, 因此可以自定义:
+- 提供的 props 如何产生冲突,并且推测正在被处理的 props
+- 接口是如何被遍历
+- 选项是如何被处理
+- 从不同地方来的接口如何被结合在一起
+```ts
+export interface Props {
+    name: string;
+}
+
+export class Greet extends React.Component<Props> {
+    render() {
+        const { name } = this.props;
+        return <div> Hello ${name.toUpperCase()}!</div>;
+    }
+    static defaultProps = {name: 'world'}
+}
+```
+## 注意
+### 显式的 `defaultProps` 类型
+#### 被默认的属性可以从defaultProps 属性类型中音效, 如果一个显式类型被添加上, 比如
+`static defaultProps: Partial<Props>`, 编译器将不会知道哪些属性有默认值(因为 defaultProps 包含所有的 Props 属性)
+#### 使用 `static defaultProps: Pick<Props, "name">`作为显式声明, 或者类似于上述例子中一样不添加任何类型声明.
+#### 对纯函数组件(stateless function component: SFC)
+```ts
+function Greet({name = "world"}:Props) {
+    return <div>Hello ${name.toUpperCase()}!</div>
+}
+```
+# `/// <reference lib="..."/>` 引用命令
+### ts 添加了新的三斜杆引用命令, 可以允许文件被显式的引入到已存在的内置库文件中
+### 内置库(lib)文件在 tsconfig.json 中同样可以简短通过 lib 引用.`lib="es2015"` 而不是`lib="lib.es2015.d.ts"`
+## 还可以引入某个类, 比如
+```ts
+/// <reference lib="es2017.string"/>
+"foo".padStart(5, '0'); //"00foo"
 ```
