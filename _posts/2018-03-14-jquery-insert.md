@@ -6,7 +6,7 @@ date:       2018-03-14 12:00:00
 author:     "Lorry"
 catalog: true
 multilingual: false
-header-img: "http://p799phkik.bkt.clouddn.com/micro_building.jpeg"
+header-img: "/img/back/img_lights.jpg"
 tags:
     - jQuery
 ---

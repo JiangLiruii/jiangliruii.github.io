@@ -4,7 +4,7 @@ title:      "HTTPS"
 subtitle:   "强迫症的我如何实现博客的小绿标" 
 date:       2018-04-16 12:39:00
 author:     "Lorry"
-header-img: "http://p799phkik.bkt.clouddn.com/lock.jpeg"
+header-img: "/img/back/lock.jpeg"
 catalog: true
 multilingual: false
 tags:
@@ -23,7 +23,7 @@ tags:
 - 等至多72个小时
 - 当**statue**变成**active**的时候,就可以进行下一步操作了.
 - 进入Crypto,修改SSL为**Flexible SSL**(如果你有SSL证书可选择Full SSL)
-- 之后就可以对**page rule**进行重定向修改,setting 选择always HTTPS, 一定要看到已激活界面![激活界面](http://p799phkik.bkt.clouddn.com/image/POSTS/cfStatue.png)才能设置为always HTTPS![always https](http://p799phkik.bkt.clouddn.com/image/POSTS/https.png)
+- 之后就可以对**page rule**进行重定向修改,setting 选择always HTTPS, 一定要看到已激活界面![激活界面](/img/back/cfStatue.png)才能设置为always HTTPS![always https](/img/back/https.png)
     - 主域名 http://website.com
     - 所有子域名http://website.com/*
 - 再等10分钟左右.就可以看到正常重定向到HTTPS界面中,有小绿锁了,并且Service Worker也可以正常使用了.

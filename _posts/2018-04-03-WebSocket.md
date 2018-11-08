@@ -6,7 +6,7 @@ date:       2018-03-16 12:00:00
 author:     "Lorry"
 catalog: true
 multilingual: false
-header-img: "http://p799phkik.bkt.clouddn.com/night_sky.jpeg"
+header-img: "/img/back/night_sky.jpeg"
 tags:
     - Node.js
 ---
@@ -79,7 +79,7 @@ success: function(result) {
 
 3. 双方响应,服务端也可以send massage到客户端,而不仅仅是只有客户端单向请求.
 
-![](http://p799phkik.bkt.clouddn.com/websocket.png)
+![](/img/back/websocket.png)
 
 服务器端(基于nodejs)
 ``` JavaScript

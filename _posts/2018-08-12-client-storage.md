@@ -5,7 +5,7 @@ subtitle:     "cookies, local storage, session storage, indexed DB"
 date:         2018-08-12 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   'http://p799phkik.bkt.clouddn.com/localstorage-feature.png'
+header-img:   '/img/back/localstorage-feature.png'
 catalog:      true
 multilingual: false
 tags:

@@ -5,7 +5,7 @@ subtitle:     "我不管你应不应,我会永远的询问你,只为万一某个
 date:         2018-07-04 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   'http://p799phkik.bkt.clouddn.com/non-blocking-1.png'
+header-img:   '/img/back/non-blocking-1.png'
 catalog:      true
 multilingual: false
 tags:
@@ -58,7 +58,7 @@ tags:
 ## 千字不如一图
 ### 下面是event-loop的运行流程
 
-![event-loop](http://p799phkik.bkt.clouddn.com/event-loop-new.png)
+![event-loop](/img/back/event-loop-new.png)
 
 ### 下面是一个例子,展示macrotask和microtask的运行原理.
-![execute-process](http://p799phkik.bkt.clouddn.com/execute-process.png)
+![execute-process](/img/back/execute-process.png)

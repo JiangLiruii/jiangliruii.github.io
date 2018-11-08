@@ -5,7 +5,7 @@ subtitle:     "网页三剑客中的css是的打包对网页的呈现以及编�
 date:         2018-08-07 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   'http://p799phkik.bkt.clouddn.com/webpack_css.jpg'
+header-img:   '/img/back/webpack_css.jpg'
 catalog:      true
 multilingual: false
 tags:

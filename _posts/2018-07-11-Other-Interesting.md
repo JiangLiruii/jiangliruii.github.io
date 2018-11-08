@@ -5,7 +5,7 @@ subtitle:     "积小流以成江河"
 date:         2018-07-11 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   'http://p799phkik.bkt.clouddn.com/promise.jpg'
+header-img:   '/img/back/interesting.jpg'
 catalog:      true
 multilingual: false
 tags:

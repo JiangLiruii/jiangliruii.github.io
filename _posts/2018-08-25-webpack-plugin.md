@@ -5,7 +5,7 @@ subtitle:     "webpack的毛细血管"
 date:         2018-08-25 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   'http://p799phkik.bkt.clouddn.com/localstorage-feature.png'
+header-img:   '/img/back/webpack-plugin.png'
 catalog:      true
 multilingual: false
 tags:

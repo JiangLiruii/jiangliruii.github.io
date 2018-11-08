@@ -5,7 +5,7 @@ subtitle:     "你的一点点改变,却要改变整个的我"
 date:         2018-07-01 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   'http://p799phkik.bkt.clouddn.com/weekly-designer-and-developer-news-1-13.png'
+header-img:   '/img/back/weekly1-13.png'
 catalog:      true
 multilingual: false
 tags:
@@ -191,7 +191,7 @@ window.onload = () => {
 
 ## 界面展示:
 
-![](http://p799phkik.bkt.clouddn.com/ExmHh3ytYj.gif)
+![](/img/back/recieve.gif)
 
 ## 总结:
 
