@@ -6,7 +6,7 @@ date:       2018-03-13 12:00:00
 author:     "Lorry"
 catalog: true
 multilingual: false
-header-img: "http://p799phkik.bkt.clouddn.com/micro_building.jpeg"
+header-img: '/img/back/micro_building.jpeg'
 tags:
     - jQuery
 ---
@@ -94,9 +94,9 @@ $('#selected-plays li').on('click',function(e){
     console.log(this);
 })
 ```
-![效果](http://p799phkik.bkt.clouddn.com/domlist.png)
+![效果](/img/back/domlist.png)
 点击事件会触发以下元素响应(这是jQuery的遍历机制).
-![](http://p799phkik.bkt.clouddn.com/domlist2.png)
+![](/img/back/domlist2.png)
 使用禁止冒泡:
 ```javascript
 $('#selected-plays li').on('click',function(e){
@@ -126,6 +126,6 @@ $(document).on('click','li',function(e){
     console.log(this);
     e.stopPropagation();})
 ```
-![](https://images2018.cnblogs.com/blog/1215846/201803/1215846-20180313173215110-1345153175.png)
+![](/img/back/1215846-20180313173215110-1345153175.png)
 
 ## 总结:click会由当前点击元素最近的匹配元素一直冒泡到document中

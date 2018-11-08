@@ -5,7 +5,7 @@ subtitle:     "常用的比较都不会出错, 就怕有了非常见的比较却
 date:         2018-07-31 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   'http://p799phkik.bkt.clouddn.com/compare.jpg'
+header-img:   '/img/back/compare.jpg'
 catalog:      true
 multilingual: false
 tags:

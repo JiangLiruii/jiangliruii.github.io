@@ -5,7 +5,7 @@ subtitle:     "工欲善其事,必先利其器"
 date:         2018-06-11 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img: 'http://p799phkik.bkt.clouddn.com/paper.jpeg'
+header-img: '/img/back/react.png'
 catalog:      true
 multilingual: false
 tags:

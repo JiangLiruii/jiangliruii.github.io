@@ -5,7 +5,7 @@ subtitle:     "毫无准备的技术面"
 date:         2018-04-23 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img: 'http://p799phkik.bkt.clouddn.com/paper.jpeg'
+header-img: '/img/back/paper.jpeg'
 catalog:      true
 multilingual: false
 tags:
