@@ -81,7 +81,7 @@ function logClass(target:any) {
         const c:any = function() {
             return constructor.apply(this, args);
         }
-        c.constructor = constructor.prototype;
+        c.prototype = constructor.prototype;
         return new c();
     }
     // 添加构造函数行为
@@ -90,10 +90,78 @@ function logClass(target:any) {
         return construct(origin, args)
     }
     // 使得instanceof可用, 链接到原型链上
-    f.constructor = origin.prototype;
+    f.prototype = origin.prototype;
     return f
 }
 ```
-#### 在为类添加额外的逻辑或元数据时, 需要接受一个参数即这个类的构造函数, 其中的target就是类的构造函数, 首先用变量进行保存, 然后对这个构造函数的过程进行修改, 返回一个新的构造函数, 保留原有的原型链. 最终在`new Person('lorry', 'jiang')`的时候会打印`new: lorry`
+#### 在为类添加额外的逻辑或元数据时, 需要接受一个参数即这个类的构造函数, 其中的target就是类的构造函数, 首先用变量进行保存, 然后对这个构造函数的过程进行修改, 返回一个新的构造函数, 以原有构造函数的参数为参数, 保留原有的原型链. 最终在`new Person('lorry', 'jiang')`的时候会打印`new: lorry`
 
 ### 函数装饰器
+
+#### 函数装饰器也成为方法装饰器, 它包含一个接受三个参数的函数, 这三个参数分别是:
+
+- 这个属性的对象
+- 属性名(一个字符串或一个符号)
+- 可选参数(属性的描述对象)
+
+#### 这个函数会返回一个undefined或参数里提供的属性的描述对象, 或这一个新的描述对象(即覆盖掉原方法). 返回undefined等同于返回参数提供的描述对象
+> 属性的描述对象可以通过 Object.getOwnPropertyDescriptor()方法获取对象
+
+#### 先定义一个没有任何行为的方法
+```ts
+function logMethod(target:any, key:string, descriptor:any) {
+    // ...
+}
+// 用于装饰Person类
+class Person {
+    @logMethod
+    public saySomthing(something:string) {
+
+    }
+}
+// 转译后的Person类
+var Person = /** @class */ (function () {
+    function Person(name, surname) {
+        this.name = name;
+        this.surname = surname;
+    }
+    Person.prototype.saySomething = function (something) {
+        return this.name + ' ' + this.surname + ' says: ' + something;
+    };
+    __decorate([
+        logMethod
+    ], Person.prototype, "saySomething", null);
+    Person = __decorate([
+        logClass
+    ], Person);
+    return Person;
+}())
+```
+#### 该装饰器被调用时, 带有以下参数
+- 包含了被装饰方法的类的原型: Person.prototype
+- 被装饰方法的名字: saySomething
+- 被装饰方法的属性描述对象: Object, 一般为 `{value: ƒ, writable: true, enumerable: true, configurable: true}`
+
+```ts
+function logMethod(target:any, key:string, desctiptor:any) {
+    // 保留原方法的引用
+    var originMethod = descriptor.value
+    // 编辑descriptor中的value属性, args为方法对应的参数
+    descriptor.value = function(...args:any[]) {
+        // 将方法参数转化为字符串
+        var a = args.map(a => JSON.stringify(a)).join();
+        // 执行方法, 得到原返回值
+        var result = originMethod.apply(this, args)
+        // 将返回值转为字符串
+        var r = JSON.stringify(result);
+        console.log(`call: ${key}(${a}) => ${r}`);
+        // 返回方法调用结果
+        return result
+    }
+    // 返回编辑后的descriptor对象
+    return descriptor;
+}
+```
+#### 跟实现类装饰器一样, 创建被装饰元素的副本开始, 没有直接调用target[key]来访问, 而是通过属性描述对象 (descriptor.value), 然后创建一个新函数来替代被修饰函数, 新函数除了调用原函数之外, 还包含了额外逻辑.
+` saySomething("world") => "Remo jansen says: world"
+"Remo jansen says: world" `
