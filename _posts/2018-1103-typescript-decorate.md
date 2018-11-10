@@ -165,3 +165,177 @@ function logMethod(target:any, key:string, desctiptor:any) {
 #### 跟实现类装饰器一样, 创建被装饰元素的副本开始, 没有直接调用target[key]来访问, 而是通过属性描述对象 (descriptor.value), 然后创建一个新函数来替代被修饰函数, 新函数除了调用原函数之外, 还包含了额外逻辑.
 ` saySomething("world") => "Remo jansen says: world"
 "Remo jansen says: world" `
+
+### 属性装饰器
+#### 包含两个参数: 1 这个属性的对象 2 这个属性的属性名(字符串或符号) 不会返回一个属性的描述对象.
+```ts
+function logProperty(target:any, key:string) {
+    // ...
+}
+class Person {
+    @logProperty
+    public name: string;
+    //...
+}
+```
+#### 我们将使用一个新属性来替代原来的属性, 新属性会表现的和原属性一致, 除了添加的打印的功能
+
+```ts
+function logProperty(target:any, key:string) {
+    var _val = this[key]
+    var getter = function() {
+        console.log(`Get: ${key} => ${_val}`)
+    }
+    var setter = function (newVal) {
+        console.log(`Set: ${key} => ${newVal}`)
+        _val = newVal;
+    }
+    // 删除属性在严格模式下如果对象configurable为false时是不可用的, 会报错.非严格模式会返回false
+    if (delete this[key]) {
+        Object.defineProperty(target, key, {
+            get: getter,
+            set: setter,
+            enumerable: true,
+            configurable: true,
+        })
+    }
+}
+```
+
+#### 在使用了上述监视器时候就可以在每次设置或获取属性时在控制台观察每一次的变化.
+
+### 参数装饰器
+
+#### 接受三个参数, 1 包含被装饰参数的方法的对象 2 方法的名字(或undefined) 3 参数在参数列表中的索引, 该装饰器的返回值会被忽略
+
+```ts
+function addMetaData(target:any, key:string, index:number) {
+    // ...
+}
+
+public saySomething(@addMetaData something:string) : string {
+    return this.name + ' ' + this.surname + ' says: ' + something;
+}
+```
+#### 参数属性没有返回值, 意味着不能对包含被修饰参数的方法进行覆盖
+```ts
+function addMetaData(target:any, key:string, index:number) {
+    var metadataKey = `_log_${key}_parameters`;
+    if (Array.isArray(target[metadataKey])) {
+        target[metdataKey].push(index);
+    } else {
+        target[metadataKey] = [indedx]
+    }
+}
+```
+#### 为了让更多的参数可以被装饰, 将检查这个新属性是否为一个数组. 单独的参数装饰器不是很有用, 但是联合方法装饰器, 就可以将参数装饰器所添加的元数据读取出来
+
+```ts
+@readMetadata
+public saySomething(@addMetaData something:string) : string {
+    return this.name + ' ' + this.surname + ' says: ' + something;
+}
+// 仅仅打印被装饰的参数
+function readMetadata(target:any, key:string, descriptor: any) {
+    var origin = descriptor.value;
+    descriptor.value = function (...args: any[]) {
+        var metadataKey = `_log_${key}_parameters`;
+        var indices = target[metadataKey];
+        if (Array.isArray(indices)) {
+            for (var i = 0; i < args.length; i++) {
+                if (indices.indexOf(i)) {
+                    var arg = args[i];
+                    var argStr = JSON.stringify(arg) || arg.toString();
+                    console.log(`${key} args[${i}]: ${argStr}`)
+                }
+            }
+            var result = origin.apply(this, args)
+            return result;
+        }
+    }
+    return descriptor;
+}
+```
+#### 由此, 当new 一个Person的实例后调用saySomething 的方法时便会展示添加的元数据. 但是需要注意的是这里使用了类属性的数组target[metadataKey]来保存数组, 下面来介绍使用反射元数据API, 用于专门生成和读取元数据
+
+### 装饰器工厂
+
+#### 一个接受任意数量参数的函数, 并且返回上述的任意一种装饰器
+
+#### 上述已经写了如何实现一个装饰器, 但是大多数情况下都是去使用而不是去实现, 可以使用装饰器工厂来使装饰器更容易被使用
+```ts
+@logClass
+class Person {
+    @logProperty
+    public name:string;
+    public surname:string;
+
+    constructor(name:sting, surname:stirng){
+        this.name = name
+        this.surname = surname
+    }
+    @logMethod
+    public saySomething (@logParameter something:string) : string{
+        return this.name +' ' + this.surname + ' says: '+ something; 
+    }
+}
+// 使用工厂装饰器
+@log
+class Person {
+    @log
+    public name:string;
+    public surname:string;
+
+    constructor(name:sting, surname:stirng){
+        this.name = name
+        this.surname = surname
+    }
+    @log
+    public saySomething (@log something:string) : string{
+        return this.name +' ' + this.surname + ' says: '+ something; 
+    }
+}
+```
+#### 这样就可以使用一个log的装饰器, 而无需担心是否使用了正确的类型. 装饰器工厂能够鉴别该使用哪种装饰器并返回函数
+```ts
+function log(...args:any[]) {
+    switch (args.length) {
+        case 1:
+            return logClass.apply(this, args)
+        case 2:
+            // 属性装饰器没有返回值, 所以使用break替代return
+            logProperty.apply(this, args)
+            break
+        case 3:
+            // 参数装饰器第三个参数为index:number, 且参数装饰器要结合函数装饰器使用
+            if(typeof args[2] === 'number') {
+                logParameter.apply(this, args)
+            }
+            return logMethod.apply(this, args);
+        default:
+            throw new Error('Decorators are not valid here')
+    }
+}
+```
+#### 正如我们看到的, 装饰器工厂通过参数的数量和类型来判断返回的装饰器类型
+
+## 带有参数的装饰器
+### 可以使用一种特殊的装饰器工厂来配置装饰器的行为
+```ts
+@logClass('option')
+class Person {
+    //...
+}
+```
+#### 为了给装饰器传递参数, 需要使用一个函数来包裹装饰器, 这个包裹函数接受参数并返回一个装饰器.即一个高阶函数
+```ts
+function logClass(option:any) {
+    return function(target:any) {
+        // 类装饰器就可以访问到参数的内容了
+        console.log(target, option)
+    }
+}
+```
+#### 可以运用到之前讨论的任意一种装饰器中
+
+
