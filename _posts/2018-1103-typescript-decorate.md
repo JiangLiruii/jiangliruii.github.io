@@ -338,4 +338,253 @@ function logClass(option:any) {
 ```
 #### 可以运用到之前讨论的任意一种装饰器中
 
+## 反射元数据API
+### 现在仅仅在代码设计时使用类型但实际上更多时候是动态的, 比如依赖注入, 运行时类型断言, 反射和测试, 这些都需要运行时的类型信息.装饰器的作用即是生成元数据, 这些元数据会携带类型信息, 可以在运行时被处理.
+### 当一个元素被保留装饰器装饰后, 编译器会自动的添加类型信息到元素上, 这些保留的装饰器如下:
+
+- @type: 被装饰目标序列化后的类型
+- @returnType: 被装饰目标若为函数, 则为其序列化后的返回类型, 否则为undefined
+- @parameterType: 如果它是一个函数, undefined或其他类型, 讁时被装饰目标序列化后的参数类型
+- @name: 被装饰目标的名字
+
+### 最终产生了反射元API ES7的特性之一.
+
+- 类型元数据: design:type
+- 参数类型元数据: design:parameter
+- 返回值元数据: design:returnType
+
+### ECMAScript的相关介绍
+#### 在对象或属性上定义元数据
+```ts
+Reflect.defineMetadata(metadataKey, metadataValue, target)
+Reflect.defineMetadata(metadataKey, metadataValue, target, propertyKey)
+
+// 检查在原型链上对象或属性的元数据key
+let result = Reflect.hasMetadata(metadataKey, target)
+let result = Reflect.hasMetadata(metadataKey, target, propertyKey)
+
+//在原型链上获取对象或属性元数据key对应的的value值
+let result = Reflect.getMetadata(metadataKey, target)
+let result = Reflect.getMetadata(metadataKey, target, propertyKey)
+
+// 获取自有的元数据(own metadata)
+let result = Reflect.getOwnMetadata(metadataKey, target)
+let result = Reflect.getOwnMetadata(metadataKey, target, propertyKey)
+
+// 获取在类或属性上所有的元数据key
+let result = Reflect.getMetadataKeys(target)
+let result = Reflect.getMetadataKeys(target, propertyKey)
+
+// 获取所有自由元数据的keys
+let result = Reflect.getOwnMetadataKeys(target)
+let result = Reflect.getOwnMetadataKeys(target, propertyKeys)
+
+// 删除元数据
+let result = Reflect.deleteMetadata(metadataKey, target)
+let result = Reflect.deleteMetadata(metadataKey, target, propertyKey)
+
+// 通过在构造函数上的装饰器应用元数据
+class C {
+    // 通过装饰方法(属性)来应用元数据
+    @Reflect.metadata(metadataKey, metadataValue)
+    method() {
+        // ...
+    }
+}
+
+// 预先设计不同的装饰器
+function Type(type) {return Reflect.metadata('design:type', type);}
+function ParamTypes(...types) { return Reflect.metadata('design:paramtypes', types);}
+function ReturnType(type) { return Reflect.metadata('design:returntype', type);}
+
+// 装饰器的应用
+@ParamTypes(String, Number)
+class C {
+    constructor(text, i){}
+    @Type(String)
+    get name() { return 'text'; }
+    @Type(Function)
+    @ParamTypes(Number, Number)
+    @ReturnType(Number)
+    public add(x, y) {
+        return x + y
+    }
+}
+
+// 元数据的自省
+let obj = new C('a', 1)
+let paramTypes = Reflect.getMetadata('design:paramtypes', obj, 'add') // [Number, Number]
+```
+
+### 抽象运算
+#### 在对象上的运算
+**获取或得到元数据表(GetOrCreatMetadataMap)(O, P, Create)**
+
+> 这里有一个internal slot的引用(内部槽位), 具体可参见: [internal slot](https://stackoverflow.com/questions/33075262/what-is-an-internal-slot-of-an-object-in-javascript)
+
+当抽象运算 GetOrCreatMetadataMap被调用时, 参数分别为 对象 O, 属性的key P, 以及布尔类型的Create, 下列步骤会一次发生
+- 断言: P时undefined 或者 IsPropertyKey(P) 是为true 
+- 使targetMetadata成为O\[\[metadata\]\]内部slot
+- 如果targetMetadata是undefined, 然后
+    - 如果create为false, 返回undefined
+    - 设置targetMetadata成为新创建的Map对象
+    - 设置O的Metadata这个内部slot为targetValue
+- 使metadataMap成为targetMetadata[P]
+- 如果metadataMap是undefined
+    - 如果create为false, 返回undefined
+    - 设置metadataMap为新创建的Map对象
+    - targetMetadata[P] = metadataMap
+- 返回metadataMap
+  
+### 普通对象(Object)与特殊对象(String, Array等)的行为
+#### 普通对象的内部方法和槽位
+所有普通对象都有一个被称为Metadata的内部slot, 这个值是null或者Map对象, 并且被用来储存一个对象的元数据
+##### metadata存在的检查
+当HasMetadata这个O的内部方法被调用的时候, 参数分别为基本类型的MetadataKey和属性key P, 以下步骤会发生
+- 返回OrdinaryHasMetadata(MetadataKey. O, P)
+来看看这个OrdinaryHasMetadata的含义
+当抽象函数被调用时, 发生了下列步骤:
+- 断言: P时undefined, 或者IsPropertyKey(P)是true
+- 使hasOwn为OrdinaryHasOwnMetadata(MetadataKey, O, P)
+- 如果hasOwn为true, 返回true
+- 让parent为 O.GetPrototypeOf(),即往原型链上找
+- 如果parent不为null, 递归重复parent.HasMetadata(MetadataKey, P)
+- 返回false
+##### HasOwnMetadata(MetadataKey, P)方法
+当O的HasWonMetadata 内部方法被调用的时候, 参数为基本类型MetadataKey和属性keyP, 下面的步骤将会发生
+- 返回OrdinaryHashOwnMetadata(MetadataKey, O, P)
+    - 断言P是undefined或IsProperty(P)为true
+    - 使metadataMap为GetOrCreateMetadataMap(O, P, false)
+    - 如果metadataMap是undefined, 返回false
+    - 返回ToBoolean(invoke(metadataMap, 'has', MetadataKey))即返回metadataMap中是否含有MetadataKey
+
+##### GetMetadata(MetadataKey, P)
+当GetMetadata这个内部方法被调用的时候, 参数还是MetadataKey和P
+- 发挥OrdinarygetMetadata(MetadataKey, O, P)
+    - 依照惯例断言P
+    - 使hasOwn为OrdinaryHasOwnMetadata(MetaddataKey, O, P)
+    - 如果hasOwn为真, 返回OrdinaryGetOwnMetadata(MetadataKey, O, P)
+    - 让parent为O.GetPrototypeOf
+    - 如果parent不为null, 则一直往上找
+    - 返回undefined
+
+##### GetOwnMetadata(MetadataKey, P, ParamIndex)
+- 返回OrdinaryGetOwnMetadata(MetadataKey, O, P)
+    - 按照惯例断言P
+    - 使metadataMap为GetOrCreateMetadataMap(O, P, false)
+    - 如果metadataMap为undefined, 返回undefined
+    - 返回metadataMap\[MetadataKey\]
+
+#### DefineOwnMetadata(MetadataKey, MetadataValue, P)
+- 返回OrdinaryDefineOwnMetadata(MetadataKey, MetadataValue, O, P)
+    - 按照惯例判断P
+    - 使metadataMap为GetOrCreateMetadataMap(O, P, true)
+    - return metadataMap[metadataKey] = MetadataValue
+##### MetadataKeys(P)
+- 返回OrdinaryMetadataKeys(O,P)
+    - 判断P
+    - 使ownKeys为OrdinaryOwnMetadataKeys(O,P)
+    - 使parent为o.GetPrototypeOf
+    - 如果parent为null, 返回ownKey
+    - 使parentKeys为O的OrdinaryMetadataKeys中属性为P的keys
+    - 使ownKeysLen为ownKeys的长度(length)
+    - 如果ownKeysLen为0, 返回parentKeys
+    - 使parentKeyLen为parentKeys的长度
+    - 如果parentKeysLen为0, 返回ownKeys
+    - 使set为一个新的Set对象
+    - 使keys为长度为0的数组
+    - 让k = 0
+    - 遍历ownKeys中的所有的key
+        - 使hasKey为set中是否包含key
+        - 如果hasKey为false, 
+            - 使Pk为ToString(k)
+            - set添加一个key
+            - 使defineStatus为CreateDataProperty(keys, Pk, key) 即keys[Pk] = key
+            - 断言defineStatus为真, 即设置成功
+            - k加1
+    - 遍历parentKeys中的key
+        - 与ownKey使一个逻辑, 最后k依然加1
+    - 设置keys的长度为k
+    - 返回keys
+#### OwnMetadataKeys(P)
+- OrdinaryOwnMetadataKeys(O,P)
+    - 断言P
+    - 使keys为长度为0的数组
+    - 使MetadataMap为GetOrCreateMetadataMap(O, P, false)
+    - 如果metadataMap为undefined, 返回keys
+    - 使keysObj为MetadataMap['keys']
+    - 使iterator为keysObj的迭代器
+    - 使k为0
+    - 重复执行
+        - 使Pk为k的字符串形式
+        - next使为 iterator.next
+        - 如果next为false
+            - setStatus为 keys['length'] = k, 如果赋值失败, 则报错
+            - 断言setStatus是否为真
+            - 返回keys
+        - 使nextValue为iteratorValue.next
+        - 使defineStatus为keys[Pk] = nextValue
+        - 如果defineStatus使一个被打断的状态, 该iterator close掉并且返回完成态defineStatus
+        - k增加1
+#### DeleteMetadata(MetadataKey, P)
+- 断言P
+- 使metadataMap为GetOrCreateMetadataMap(O,P,false)
+- 如果metadataMap是undefined, 返回false
+- 返回metadataMap['delete'] = MetadataKey
+### 反射 - Reflection
+这里其实大部分就是使用之前已经定义好的内部方法来把API暴露出来
+#### Metadata Decorator Functions 元数据装饰器函数
+一个元数据装饰器函数是一个匿名的内建函数, 以 MetadataKey以及MetadataValue为内部slots中
+当一个元数据装饰器函数F(target, key)被调用时, 以下步骤会发生:
+- 断言: F有MetadataKey内部slot, 且类型为基本类型, 或undefined
+- 断言: F有MetadataValue内部slot, 且类型为基本类型, 或undefined
+- 如果 Type(target) 不是一个对象, 抛出一个TypeError的错误
+- 如果key时一个undefined并且 IsPropertyKey(key) -- 不是target的属性, 抛出一个TypeError的错误.
+- 使metadataKey成为F MetadataKey内部slot值
+- 使metadataValue成为F MetadataValue内部slot值
+- 运行target.\[\[DefineMetadata\]\](metadataKey, metadataValue, target, key)
+- 返回undefined 
+
+#### Reflect.metadata(metadataKey, metadataValue)
+当metadata函数被metadataKey和metadataValue作为参数调用时, 下列步骤会发生:
+- 使decorator为新的内建函数, 就像定义的Metadata Decorator Functions
+- 设置decorator的MetadataKey为metadataKey
+- 设置decorator的MetadataValue为metadataValue
+- 返回decorator
+
+#### Reflect.defineMetadata(metadataKey, metadataValue, target, propertyKey)
+- 如果target不是对象, 抛出错误
+- 返回target的defineMetadata方法调用, 参数为(metadataKey, metadataValue, propertyKey)
+
+#### Reflect.hasMetadata(metadataKey, target, propertyKey)
+- 如果target为对象, 抛出错误
+- 返回target的HasMetadata方法调用, 参数为(metadataKey, propertyKey)
+
+#### Reflect.hasOwnMetadata(metadataKey, target, propertykey)
+- 如果target为对象, 抛出错误
+- 返回target的HasOwn方法调用, 参数为 (metadataKey, propertyKey)
+
+#### Reflect.getMetadata(metadateKey, target, propertyKey)
+- 如果target为对象, 抛出错误
+- 返回 target的GetMetadata方法, 参数为(metadataKey, propertyKey)
+
+#### Reflect.getOwnMetadata(metadataKey, target, propertyKey)
+- 如果target为对象, 抛出错误
+- 返回target的GetOwnMetadata(Metadata, propertyKey)
+
+#### Reflect.getMetadataKeys(target, propertyKey)
+- 如果target为对象, 抛出错误
+- 返回target.GetMetadataKeys(propertyKey)
+
+#### Reflect.getOwnMetadataKeys(target, propertyKey)
+- 如果target为对象, 抛出错误
+- target.GetOwnMetadataKeys(propertyKey)
+
+#### Reflect.deleteMetadata(metadataKey, target, propertyKey)
+- 如果target为对象, 抛出错误
+- target.DeleteMetadata(metadataKey, propertyKey)
+
+
+
+
 
