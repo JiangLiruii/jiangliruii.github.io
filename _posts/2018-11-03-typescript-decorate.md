@@ -5,7 +5,7 @@ subtitle:     "typescript 的装饰器"
 date:         2018-11-03 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   '/img/performanceEvent.jpg'
+header-img:   '/img/Metadata.jpg'
 catalog:      true
 multilingual: false
 tags:
@@ -25,7 +25,7 @@ tags:
 
 ## 装饰器跟注解很像同一个东西, 使用上来看具有相同的语法, 但是使用注解时不需要关心如何将元数据加入代码里来的, 装饰器更像是一个接口, 用来构建一个以注解位结尾的东西
 
-### 我们将使用下面这个类来说明如何使用装饰器
+### 我们将使用下面这个类来说明如何使用装饰器, 以下都是实际的代码, 具体为什么这么写放在了最后, 使ECMAScript的关于metadata的翻译.
 ```ts
 class Person {
     public name: string;
@@ -338,24 +338,26 @@ function logClass(option:any) {
 ```
 #### 可以运用到之前讨论的任意一种装饰器中
 
-## 反射元数据API
-### 现在仅仅在代码设计时使用类型但实际上更多时候是动态的, 比如依赖注入, 运行时类型断言, 反射和测试, 这些都需要运行时的类型信息.装饰器的作用即是生成元数据, 这些元数据会携带类型信息, 可以在运行时被处理.
-### 当一个元素被保留装饰器装饰后, 编译器会自动的添加类型信息到元素上, 这些保留的装饰器如下:
+# 反射元数据API
+现在仅仅在代码设计时使用类型但实际上更多时候是动态的, 比如依赖注入, 运行时类型断言, 反射和测试, 这些都需要运行时的类型信息.装饰器的作用即是生成元数据, 这些元数据会携带类型信息, 可以在运行时被处理.
+## 当一个元素被保留装饰器装饰后, 编译器会自动的添加类型信息到元素上, 这些保留的装饰器如下:
 
 - @type: 被装饰目标序列化后的类型
 - @returnType: 被装饰目标若为函数, 则为其序列化后的返回类型, 否则为undefined
 - @parameterType: 如果它是一个函数, undefined或其他类型, 讁时被装饰目标序列化后的参数类型
 - @name: 被装饰目标的名字
 
-### 最终产生了反射元API ES7的特性之一.
+## 最终产生了反射元API ES7的特性之一.
 
 - 类型元数据: design:type
 - 参数类型元数据: design:parameter
 - 返回值元数据: design:returnType
 
-### ECMAScript的相关介绍
-#### 在对象或属性上定义元数据
+## [ECMAScript的相关介绍](https://rbuckton.github.io/reflect-metadata/#introduction
+)
+### 在对象或属性上定义元数据
 ```ts
+// 定义元数据
 Reflect.defineMetadata(metadataKey, metadataValue, target)
 Reflect.defineMetadata(metadataKey, metadataValue, target, propertyKey)
 
@@ -416,11 +418,12 @@ let obj = new C('a', 1)
 let paramTypes = Reflect.getMetadata('design:paramtypes', obj, 'add') // [Number, Number]
 ```
 
-### 抽象运算
-#### 在对象上的运算
+## 抽象运算
+以下是ECMAScript中的对元数据这个特性的实现方式
+### 在对象上的运算
 **获取或得到元数据表(GetOrCreatMetadataMap)(O, P, Create)**
 
-> 这里有一个internal slot的引用(内部槽位), 具体可参见: [internal slot](https://stackoverflow.com/questions/33075262/what-is-an-internal-slot-of-an-object-in-javascript)
+> 这里有一个internal slot的引用(内部槽位), 具体可参见: [internal slot](https://stackoverflow.com/questions/33075262/what-is-an-internal-slot-of-an-object-in-javascript), 我理解的就是对象的内部属性, 是不可直接访问的, 但是可以通过某些API间接获取或修改值
 
 当抽象运算 GetOrCreatMetadataMap被调用时, 参数分别为 对象 O, 属性的key P, 以及布尔类型的Create, 下列步骤会一次发生
 - 断言: P时undefined 或者 IsPropertyKey(P) 是为true 
@@ -436,31 +439,26 @@ let paramTypes = Reflect.getMetadata('design:paramtypes', obj, 'add') // [Number
     - targetMetadata[P] = metadataMap
 - 返回metadataMap
   
-### 普通对象(Object)与特殊对象(String, Array等)的行为
+### 普通对象(Ordinary Object)与特殊对象(String, Array等)中有关元数据的行为
 #### 普通对象的内部方法和槽位
 所有普通对象都有一个被称为Metadata的内部slot, 这个值是null或者Map对象, 并且被用来储存一个对象的元数据
 ##### metadata存在的检查
-当HasMetadata这个O的内部方法被调用的时候, 参数分别为基本类型的MetadataKey和属性key P, 以下步骤会发生
 - 返回OrdinaryHasMetadata(MetadataKey. O, P)
-来看看这个OrdinaryHasMetadata的含义
-当抽象函数被调用时, 发生了下列步骤:
-- 断言: P时undefined, 或者IsPropertyKey(P)是true
-- 使hasOwn为OrdinaryHasOwnMetadata(MetadataKey, O, P)
-- 如果hasOwn为true, 返回true
-- 让parent为 O.GetPrototypeOf(),即往原型链上找
-- 如果parent不为null, 递归重复parent.HasMetadata(MetadataKey, P)
-- 返回false
+    - 断言: P时undefined, 或者IsPropertyKey(P)是true
+    - 使hasOwn为OrdinaryHasOwnMetadata(MetadataKey, O, P)
+    - 如果hasOwn为true, 返回true
+    - 让parent为 O.GetPrototypeOf(),即往原型链上找
+    - 如果parent不为null, 递归重复parent.HasMetadata(MetadataKey, P)
+    - 返回false
 ##### HasOwnMetadata(MetadataKey, P)方法
-当O的HasWonMetadata 内部方法被调用的时候, 参数为基本类型MetadataKey和属性keyP, 下面的步骤将会发生
-- 返回OrdinaryHashOwnMetadata(MetadataKey, O, P)
+- 返回OrdinaryHasOwnMetadata(MetadataKey, O, P)
     - 断言P是undefined或IsProperty(P)为true
     - 使metadataMap为GetOrCreateMetadataMap(O, P, false)
     - 如果metadataMap是undefined, 返回false
     - 返回ToBoolean(invoke(metadataMap, 'has', MetadataKey))即返回metadataMap中是否含有MetadataKey
 
 ##### GetMetadata(MetadataKey, P)
-当GetMetadata这个内部方法被调用的时候, 参数还是MetadataKey和P
-- 发挥OrdinarygetMetadata(MetadataKey, O, P)
+- 返回OrdinarygetMetadata(MetadataKey, O, P)
     - 依照惯例断言P
     - 使hasOwn为OrdinaryHasOwnMetadata(MetaddataKey, O, P)
     - 如果hasOwn为真, 返回OrdinaryGetOwnMetadata(MetadataKey, O, P)
@@ -531,8 +529,11 @@ let paramTypes = Reflect.getMetadata('design:paramtypes', obj, 'add') // [Number
 - 使metadataMap为GetOrCreateMetadataMap(O,P,false)
 - 如果metadataMap是undefined, 返回false
 - 返回metadataMap['delete'] = MetadataKey
+
+
 ### 反射 - Reflection
 这里其实大部分就是使用之前已经定义好的内部方法来把API暴露出来
+
 #### Metadata Decorator Functions 元数据装饰器函数
 一个元数据装饰器函数是一个匿名的内建函数, 以 MetadataKey以及MetadataValue为内部slots中
 当一个元数据装饰器函数F(target, key)被调用时, 以下步骤会发生:
@@ -546,7 +547,6 @@ let paramTypes = Reflect.getMetadata('design:paramtypes', obj, 'add') // [Number
 - 返回undefined 
 
 #### Reflect.metadata(metadataKey, metadataValue)
-当metadata函数被metadataKey和metadataValue作为参数调用时, 下列步骤会发生:
 - 使decorator为新的内建函数, 就像定义的Metadata Decorator Functions
 - 设置decorator的MetadataKey为metadataKey
 - 设置decorator的MetadataValue为metadataValue
