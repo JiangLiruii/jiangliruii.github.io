@@ -5,7 +5,7 @@ subtitle:     "React.memo 和钩子们"
 date:         2018-10-30 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   '/img/react16.6.webp'
+header-img:   '/img/structure.jpg'
 catalog:      true
 multilingual: false
 tags:
@@ -321,3 +321,5 @@ Polymer是实现了真正的Web component, 但是React使用的是可复用的UI
     /           \
   |/_           _\|
 model   <----->  view <----模板
+
+可以参见我的[github](https://github.com/JiangLiruii/SimpleStructure), 上面的commit详细记录了我进行编码的过程, 对每一个上述的材料都进行了编写.
