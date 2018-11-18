@@ -1,8 +1,8 @@
 ---
 layout:       post
-title:        "React 16.6 新特性"
-subtitle:     "React.memo 和钩子们"
-date:         2018-10-30 12:00:00
+title:        "App structure"
+subtitle:     "自制轻型应用框架"
+date:         2018-11-10 12:00:00
 author:       "Lorry"
 header-mask:  0.3
 header-img:   '/img/structure.jpg'
