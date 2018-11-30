@@ -92,7 +92,7 @@ class NavBarItemView extends Marionette.ItemView {
 
 ### collection view
 它于view类似于collection于model, 是一个集合的概念. collection view 迭代collection里面存储的model, 使用item view渲染它, 然后追加到容器尾部.
-但是这样容易造成性能瓶颈, 更好的实现方式是使用一个item view和属性为数组的model, 然后使用{{ # each }} 语句在view的模板中将这个列表渲染出来, 而不是为collection的每一个元素都渲染一个view
+但是这样容易造成性能瓶颈, 更好的实现方式是使用一个item view和属性为数组的model, 然后使用`\{\{ # each \}\}` 语句在view的模板中将这个列表渲染出来, 而不是为collection的每一个元素都渲染一个view
 
 ```ts
 class SampleCollectionView extends Marionette.CollectionView<SampleModel> {
