@@ -1,7 +1,7 @@
 # Site settings
 title: Lirui Blog
 SEOTitle: 礼锐的博客 | Lirui Blog
-header-img: http://p799phkik.bkt.clouddn.com/home-bg.jpg
+header-img: '/img/night-sky-stars.jpg'
 email: 535904200@qq.com
 description: "这是礼锐的博客,专注前端,热爱生活"
 keyword: "礼锐, 蒋礼锐, lorry, 礼锐的博客, Lirui Blog, 博客, 个人网站, 互联网, Web, JavaScript, 前端, 设计"
