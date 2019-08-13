@@ -5,7 +5,7 @@ subtitle:     "关于引擎的那一堆事"
 date:         2019-07-20 12:00:00
 author:       "Lorry"
 header-mask:  0.3
-header-img:   ''
+header-img:   '/img/chrome.jpg'
 catalog:      true
 multilingual: false
 tags:
