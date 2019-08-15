@@ -802,3 +802,49 @@ const a = new A();// A
 const b = new B();// B
 // 可以看到这个target就是new时候的对象.
 ```
+
+## var
+
+虽然现在开发当做不怎么用 var 了, 但是在浏览器调试的时候图方便还是经常用 var, 可以重复定义变量. 但是发现了这样一个问题, 当然是在非严格模式下
+
+```js
+var name = 'lorry'
+age = 14
+
+delete this.name // 1
+delete this.age // 2
+```
+注释 1, 和注释 2 分别会返回什么?
+
+- 1 是 `false`
+- 2 是 `true`
+
+查了var 在 MDN 的定义[描述](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/var#Description)的第三条
+
+> Declared variables are a non-configurable property of their execution context (function or global). Undeclared variables are configurable (e.g. can be deleted).
+
+才知道了有 var 的定义在window或函数作用域中的 configurable 为 false, 也就意味着不能再在 this中删除了.而没有生命的是可以被删除, 神奇吧. 那么再看看其他两个变量声明, const 和 let会不会也有类似的神奇之处?
+
+```js
+const name = 'lorry'
+let age = 18
+delete window.name // 1
+delete window.age // 2
+```
+上述代码 1, 2 注释会返回什么呢? 都是 true. 那看起来是跟 var 一样的咯?
+没那么简单, 看看 delete 的[定义](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/delete#Description)
+
+> If the property which you are trying to delete does not exist, delete will not have any effect and will return true
+
+那是不是 window 上压根就没有 name 和 age 呢? 是的! `let` 和 `const` 创建的变量不会挂载到执行的上下文中, 所以对于不存在的属性, 使用 delete 不会有任何作用但是会返回 true
+
+还有一个专门针对 const 和 let 的, 指明无法通过 delete 删除.
+
+> Any property declared with let or const cannot be deleted from the scope within which they were defined.
+
+看看 const 的[定义](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const#Description)
+其中专门讲到
+>  Global constants do not become properties of the window object, unlike var variables. 
+不会成为全局变量的属性/
+
+是不是很想知道为什么这两者之前存在区别, 究竟浏览器是如何实现的? 如何去辨别的? 这也是我想知道的问题, 希望以后能找到答案. 现在我只知道这是标准, 就像 1+1=2 那样没有别的理由, 照做就行.
