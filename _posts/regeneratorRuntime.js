@@ -12,24 +12,30 @@ var runtime = (function (exports) {
   var hasOwn = Op.hasOwnProperty;
   var undefined; // More compressible than void 0.
   var $Symbol = typeof Symbol === "function" ? Symbol : {};
+  // 同步迭代对象
   var iteratorSymbol = $Symbol.iterator || "@@iterator";
+  // 异步迭代对象
   var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
+  // 转 string 方法
   var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
 
+  // 封装函数, 返回一个生成器
   function wrap(innerFn, outerFn, self, tryLocsList) {
-    // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
+    //如果 outerFn 以及提供并且 outerFn.prototype 是一个Generator, 那么 outerFn.prototype 就是一个 Generator
     var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
     var generator = Object.create(protoGenerator.prototype);
     var context = new Context(tryLocsList || []);
 
-    // The ._invoke method unifies the implementations of the .next,
-    // .throw, and .return methods.
+    // ._invoke 方法统一了.next, .throw, .return 方法
     generator._invoke = makeInvokeMethod(innerFn, self, context);
 
     return generator;
   }
   exports.wrap = wrap;
 
+  // Try/catch 用于最小化负优化, 返回一个完整的记录, 类似 context.tryEntries[i].completion. 这个接口可以被用于一个闭包去没有参数的触发, 但是在所有我们关心的
+  // 情况中已经有我们想要调用的现有的方法, 所以没有必要创建一个新的函数对象. 我们甚至可以假设 method 仅仅只有一个参数, 因为在任何情况下都为 true, 所以我们不
+  // 不要去接触 arguments 对象, 唯一额外的分配就是完成态的记录, 他有一个稳定的形状, 并且可以很简单的分配
   // Try/catch helper to minimize deoptimizations. Returns a completion
   // record like context.tryEntries[i].completion. This interface could
   // have been (and was previously) designed to take a closure to be
@@ -48,15 +54,19 @@ var runtime = (function (exports) {
     }
   }
 
+  // 定义四种状态
   var GenStateSuspendedStart = "suspendedStart";
   var GenStateSuspendedYield = "suspendedYield";
   var GenStateExecuting = "executing";
   var GenStateCompleted = "completed";
 
+  // 从 innerFn 返回的这个对象具有与断开 dispatch 转换状态的相同功能
+
   // Returning this object from the innerFn has the same effect as
   // breaking out of the dispatch switch statement.
   var ContinueSentinel = {};
 
+  
   // Dummy constructor functions that we use as the .constructor and
   // .constructor.prototype properties for functions that return Generator
   // objects. For full spec compliance, you may wish to configure your

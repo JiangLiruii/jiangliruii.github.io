@@ -321,9 +321,183 @@ _applyDecoratedDescriptor(
 _obj);
 ```
 
+## 私有变量
+
+chrome 在 74 版本的时候就支持类的私有属性了, 比如
+
+```js
+class Beauty {
+  #age = 18;
+  getAge() {
+    return this.#age
+  }
+}
+
+const beautyGirl = new Beauty;
+beautyGirl.getAge() // 18
+beautyGirl.#age // Error
+```
+该私有属性除了 Beauty 类本身可以获取到之外, 其余没有地方可以获取.包括继承其的类.
+
+那么 babel 会转换成怎么样可识别的代码呢?
+
+```js
+// 获取私有字段方法, 必须通过该方法才可获取到私有字段
+function _classPrivateFieldGet(receiver, privateMap) {
+  var descriptor = privateMap.get(receiver);
+  if (!descriptor) {
+    // 只能在实例中去获取该属性, 即 class 中的 this
+    throw new TypeError("attempted to get private field on non-instance");
+  }
+  // 如果是通过 getter 方式设置的
+  if (descriptor.get) {
+    return descriptor.get.call(receiver);
+  }
+  // 否则返回值
+  return descriptor.value;
+}
+
+class Beauty {
+  constructor() {
+    _age.set(this, {
+      writable: true,
+      value: 18
+    });
+  }
+
+  getAge() {
+    return _classPrivateFieldGet(this, _age);
+  }
+}
+// 使用 WeakMap 结构, 每一个私有变量都会 new 一个 WeakMap
+var _age = new WeakMap();
+```
+
+最关键的是看出其使用的 WeakMap 结构, 跟普通字典{}的区别在于, WeakMap 必须以对象作为键. (因为其弱引用的机制)那么 WeakMap 与 Map 有什么区别呢? **垃圾回收**, WeakMap 的键一旦被 delete 调了之后是不会计算其内部的引用而被垃圾回收调, Map 的话则会继续保留引用, 从而不会被垃圾回收. 也正是由于这种弱引用的机制, WeakMap 里面的键和值都是不可枚举的.
+
+```js
+var weakM = new WeakMap()
+var obj = {value: 1}
+weakM.set(obj, {writable: false, value: obj.value})
+window.obj = obj
+delete window.obj// 这个时候 obj 就已经做好被垃圾回收的准备了, 即便 set 里面还保留着对 obj 的引用
+```
+
+再来看看如何进入`_classPrivateFieldGet`方法的以下条件判断
+```js
+  if (descriptor.get) {
+    return descriptor.get.call(receiver);
+  }
+```
+
+需要设置私有变量为 getter, 也就转变为私有方法了
+
+```js
+class Beauty {
+  get #age() {
+    return 18
+  }
+  setAge(age) {
+    this.#age = age
+  }
+  printAge() {
+    console.log(this.#age)
+  }
+}
+
+// 转换为
+// 获取私有方法的 polyfill
+function _classPrivateMethodGet(receiver, privateSet, fn) {
+  // 判断是否将该实例放到了私有 set 中
+  if (!privateSet.has(receiver)) {
+    throw new TypeError("attempted to get private field on non-instance");
+  }
+  return fn;
+}
+// 注意此处的设置私有方法时的报错
+
+function _classPrivateMethodSet() {
+  throw new TypeError("attempted to reassign private method");
+}
+
+class Beauty {
+  constructor() {
+    _age.add(this);
+  }
+
+  setAge(age) {
+    _classPrivateMethodSet();
+  }
+
+  printAge() {
+    console.log(_classPrivateMethodGet(this, _age, _age2));
+  }
+}
+// 储存私有变量的数据, 每一个私有变量都会 new 一个 WeakSet, 注意与私有变量 new 的 WeakMap 不同, 这里 new 的是 WeakSet,  Set 和 Map 的区别在于 key, value是否相同, 或者说 set只有  key 没有 value(或反之), 在私有方法中, value 的值是同名函数调用得到, 所以只储存一个即可.
+var _age = new WeakSet();
+
+var _age2 = function _age2() {
+  return 18;
+};
+
+```
+
+需要注意的是, 上例可以看出私有变量的 get 或者为method 的是无法进行修改的.但是值是可以的, 比如
+
+```js
+class Beauty {
+  #age = 18
+  setAge(age) {
+    this.#age = age
+  }
+}
+// 转换为
+
+// 设置类的私有字段
+function _classPrivateFieldSet(receiver, privateMap, value) {
+  // 获取字段自描述对象
+  var descriptor = privateMap.get(receiver);
+  if (!descriptor) {
+    throw new TypeError("attempted to set private field on non-instance");
+  }
+  if (descriptor.set) {
+    // 调用 WeakMap 的 set 方法
+    descriptor.set.call(receiver, value);
+  } else { // 如果没有 set 方法, 即不是 WeakMap
+    // 如果可写的话
+    if (!descriptor.writable) {
+      throw new TypeError("attempted to set read only private field");
+    }
+    // 直接设置值
+    descriptor.value = value;
+  }
+  return value;
+}
+
+class Beauty {
+  constructor() {
+    _age.set(this, {
+      writable: true,
+      value: 18
+    });
+  }
+
+  setAge(age) {
+    _classPrivateFieldSet(this, _age, age);
+  }
+}
+
+var _age = new WeakMap();
+
+```
+
+注意这里的 `_classPrivateFieldSet` 方法.
+
+相信之后 babel 还会再进行优化, 现在私有变量还有诸多的限制, 以后应该会有更大的发挥空间, 可以像 Java 那样有 protect 可被继承类访问到的受保护的变量.
+
 ## async / await
 
-在看一个有趣的, 异步的语法.工作中用得蛮多的.
+再看一个有趣的, 异步的语法.工作中用得蛮多的.
 
 ```js
 function a () {
