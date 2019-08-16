@@ -848,3 +848,74 @@ delete window.age // 2
 不会成为全局变量的属性/
 
 是不是很想知道为什么这两者之前存在区别, 究竟浏览器是如何实现的? 如何去辨别的? 这也是我想知道的问题, 希望以后能找到答案. 现在我只知道这是标准, 就像 1+1=2 那样没有别的理由, 照做就行.
+
+## 临时死区 TDZ(Temperare Dead Zone)
+
+这是引入 let 和 const 之后有的概念. 是很细节的东西. 平时一直在用, 只是没有在意, 出了 bug 也能一眼从报错中发现问题, 不过作为一个有追求的程序员, 还是要精益求精.
+
+```js
+var a = 123
+console.log(b)
+let b = 1;
+```
+
+上述代码在 chrome 中运行就会报错: `VUncaught ReferenceError: Cannot access 'b' before initialization`.
+于是, 从 let 那一行之前的所有**块作用域**都是临时死区, 这里不会报没定义的错误, 比如
+```js
+console.log(c)
+```
+这里的报错是: `Uncaught ReferenceError: c is not defined`. 注意这两者的区别, 使用 typeof 操作符
+
+```js
+console.log(typeof(c))
+console.log(typeof(d))
+let d  = 1
+```
+第一条语句可以被正常执行, 打印`undefined`, 第二条语句就会报错.
+```js
+function test() {
+  var n = 1;
+  if(true){
+    let n = n+1
+  }
+  console.log(n)
+}
+```
+这个也会报错! 一样的问题, 在 if 块作用有内, n 已经形成临时死区, 赋值语法从右往左, 所以 n+1 是先与赋值执行, 也就会导致在死区中
+
+还有一些比较隐秘的地方
+
+```js
+var a  = 123
+function b() {
+  console.log(a);
+  let a = 456
+}
+```
+在 function 里面也形成了一个临时死区, 导致执行`b()`时 console 语句报错 `Uncaught ReferenceError: Cannot access 'a' before initialization`, 看起来因为外部作用域的关系, a 是拿得到值123 的, 事实上并不是.
+
+还有 for 循环
+```js
+var n = {number: [1,2,3,4,5]};
+for(let n of n.a) {
+  console.log(n)
+}
+```
+同样也会报相同的错误, 因为 for 语句形成了一个块作用域(包括括号中), 跟 if, 函数, switch 等块作用域一样.
+
+说个与死区无关的, let 和 const 是独占这个块状作用域的, 也就是说, 以下是会报错的
+```js
+let a = 1
+if (true) {
+  var a = 2
+}
+```
+不过这个报错就不是什么死区的错误, 而是重新定义的错误 `Uncaught SyntaxError: Identifier 'a' has already been declared`.只要在我范围内, 就只能被定义一次.
+
+上述 let 同样适配与 const, 两者除了变量是否可变之外并无实质区别, 据说好像 chrome 分配的内存大小会不一样~不得而知了.
+
+有一种关于变量提升的说法很有意思:
+
+- let, const只是创建过程提升，初始化过程并没有提升，所以会产生暂时性死区。
+- var的创建和初始化过程都提升了，所以在赋值前访问会得到undefined
+- function 的创建、初始化、赋值都被提升了
