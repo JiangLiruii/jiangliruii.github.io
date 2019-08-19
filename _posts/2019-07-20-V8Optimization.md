@@ -87,6 +87,59 @@ var b = new A(2,1)
 ```
 这样就只会创建 3 个隐藏类.
 
+### 关于不使用类而使用字面量对象来解释 Transition 链
+```js
+var o = {}
+o.x = 5
+o.y = 6
+```
+上述 js 代码可以比较方便的解释 shape 的概念, 也就是上文说的隐藏类, shapes 组成的连接关系被称为 **Transition 链**
+
+![](/img/shape1.svg)
+
+可以看到共创建了三个 shape, 甚至都不需要在最新的 shape 中保存所有的属性, 因为可以通过 shape 链进行访问, 也就是
+
+![](/img/shape2.svg)
+
+如果创建了两个不同的对象呢? 引擎会尽可能的共享相同的 shape, 如下例中的 empty shape
+
+![](/img/shape3.svg)
+
+而如果两个对象没有共享的 shape 呢?例如下例, 那样就是完全独立的两个 Transition 链了.
+
+![](/img/shape4.svg)
+
+如果链条较长, 如下例, 一级一级向上搜索十分的缓慢, 时间复杂度为 O(n), 这个时候就需要引入一个 shapetable 来映射这个关系, 把搜索 shape 的复杂度降到 O(1)
+```js
+const point = {};
+point.x = 4;
+point.y = 5;
+point.z = 6;
+```
+
+![](/img/shapetable-1.svg)
+
+但是, 这个 table 会让人很奇怪, 既然这里还要存个字典, 那我当初直接用这个字典不就好了吗?
+
+这时候就要引入 IC(inline cache) 的概念了.IC 会缓存 shape 的调用结果, 在之后的调用中可以快速返回 shape 的 offset 值, 提升对象的查找效率
+
+假设创建了这样一个函数
+
+![](/img/ic-1.svg)
+
+然后传入{x:'a'}作为参数
+
+![](/img/ic-2.svg)
+
+因为这是第一次执行,所以使用 `get_by_id` 去查找对应 shape 的 offset 值, 也就是0
+
+![](/img/ic-3.svg)
+
+
+IC会缓存 `get_by_id`返回的shape 以及 offset, 在之后的调用中遇到相同的 offset 就会立即返回 offset
+
+![](/img/ic-4.svg)
+
 **同构运算**: 只在相同的隐藏类上的对象运算. V8 会在调用函数时创建一个隐藏类, 如果我们通过不同的参数**类型**(是类型而不是参数值)来再次调用, V8 需要创建新的hidden class.所以 **使用同构运算而不是使用多态**.
 
 ## 更多的 V8 代码优化
