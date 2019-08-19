@@ -14,13 +14,30 @@ tags:
 
 # 概述
 
-在没有 js 引擎之前, 都是没有编译的, 浏览器作为解释器对运行到的每条语句进行解释, js 引擎则有了一个编译的过程, 会将 js 转换成更底层的代码. V8是谷歌德国研究中心编写的, 基于 C++编写的, [openSource](https://code.google.com/p/v8/wiki/Source), 既可以对服务端的 node.js, 也可以对客户端的JavaScript应用.
+在没有 js 引擎之前, 都是没有编译的, 浏览器作为解释器对运行到的每条语句进行解释, 这样会导致 js 运行十分的慢, 一旦遇到比较复杂的逻辑, 解释再运行会消耗大量的时间, 加上 js 是单线程的运行时, 就会阻塞后续的代码执行, 也无法响应用户的交互, 所以在没有引擎之前的前端, js 代码很少, 那会前端被称为切图工程师, 只需要制作出静态的页面,具体的复杂逻辑都是交给后端处理, 配合 ajax 异步请求回去调用的数据来实现前端的轻量.
 
-都知道 V8很快, 可以提升 js 在浏览器中的执行性能, 如何实现?
+js 引擎则对源代码有了编译的过程, 会将 js 转换成更底层的代码. V8是谷歌德国研究中心编写的, 基于 C++编写的, [openSource](https://code.google.com/p/v8/wiki/Source), 既可以对服务端的 node.js, 也可以对客户端的JavaScript应用.
+
+都知道 V8很快, 可以提升 js 在浏览器中的执行性能, 这是如何实现的呢?
 
 V8 将 js 代码转换成更有效的机器代码而不是作为一个interpreter, 转换时间节点为**运行时**, 也被成为 JIT(Just-In-Time), 与之对应的还有 AOT(Ahead-Of-Time), 当然这也是很多现代浏览器使用的方法, 比如 Mozilla. 主要的区别在 V8 **没有产生字节码以及中间代码**.
 
-以下会解释一些 V8 的特性以及代码优化相关的内容.
+## 宏观的看一下引擎的工作?
+
+![](/img/interpreter-optimizing-compiler.svg)
+
+整个就是一个管道(pipeline)
+- 先快速的生成 `bytecode`字节码, 特点是生成快速但是优化程度不高, 性能不够好;
+- Profilling data根据函数或对象的热值(hot value)来进行优先收集传到 compiler 中
+- 从 Profilling data 到 compile 出机器码(`machine code`)会比生成 `bytecode` 需要更多的时间, 但是可以极大的提升性能. 如果发现运行到一个地方机器码发生了变化, 那么就会反优化到 `bytecode`, 然后不断重复上述的过程
+
+下面是 V8 的示意图
+
+![](/img/interpreter-optimizing-compiler-v8.svg)
+
+V8中 interpreter 被叫做Ignition, 优化后的 compiler 被叫做 TurboFan.
+
+以下会解释一些更详细的 V8 特性以及代码优化相关的内容.
 
 ## Hidden Class 隐藏类
 
@@ -157,7 +174,12 @@ IC会缓存 `get_by_id`返回的shape 以及 offset, 在之后的调用中遇到
 V8 使用两种不同的方法来处理数组
 
 - **快速元素**: 当数组的每个元素都有值的时候, 他们就可以支持一个线性储存buffer来快速访问
-- **字典元素**: 如果元素中不是每个元素都有的话, 这个数组实际上就是一个 **hash 表**, 会比快速元素访问更昂贵.
+
+![](/img/array-elements.svg)
+
+- **字典元素**: 如果元素中不是每个元素都为普通元素(即不通过 Object.defineProperty 设置属性的元素)或者有空元素, 那么这个数组实际上就是一个 **hash 表**, 会比快速元素访问更昂贵.
+
+![](/img/array-dictionary-elements.svg)
 
 
 #### 代码优化
